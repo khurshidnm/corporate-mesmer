@@ -158,8 +158,24 @@ async function bootstrapDefaultUsers() {
 }
 
 async function migrateUserFields() {
-  // Update existing users with missing multilingual fields
-  const existingUsers = await User.find({});
+  // Cheap check first: skip the full scan entirely once data is migrated,
+  // this ran a find({}) + N sequential updates on every single login before.
+  const needsMigrationCount = await User.countDocuments({
+    $or: [
+      { name: { $type: "string" } },
+      { position: { $type: "string" } },
+      { object_name: { $type: "string" } },
+      { viewPermissions: { $in: [null, undefined] } },
+      { order_id: { $in: [null, undefined] } },
+    ],
+  });
+
+  if (needsMigrationCount === 0) {
+    return;
+  }
+
+  const existingUsers = await User.find({}).lean();
+  const bulkOps: any[] = [];
 
   for (const user of existingUsers) {
       let needsUpdate = false;
@@ -203,9 +219,18 @@ async function migrateUserFields() {
         needsUpdate = true;
       }
 
-        if (needsUpdate) {
-          await User.findByIdAndUpdate(user._id, updateData);
-          console.log(`Updated user ${user.email} with missing fields`);
-        }
-      }
+    if (needsUpdate) {
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: user._id },
+          update: { $set: updateData },
+        },
+      });
+    }
   }
+
+  if (bulkOps.length > 0) {
+    await User.bulkWrite(bulkOps);
+    console.log(`Migrated ${bulkOps.length} user(s) with missing fields`);
+  }
+}

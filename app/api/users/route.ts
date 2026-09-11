@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     let sortOptions: any = {};
 
     if (sortBy === "birthday") {
-      const users = await User.find({});
+      const users = await User.find({}).select("-password").lean();
       const today = new Date();
       const currentYear = today.getFullYear();
 
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           );
 
           return {
-            ...user.toJSON(),
+            ...user,
             daysUntilBirthday: daysUntil,
           };
         })
@@ -75,7 +75,10 @@ export async function GET(request: NextRequest) {
       sortOptions = { [sortBy]: order === "desc" ? -1 : 1 };
     }
 
-    const users = await User.find({}).sort(sortOptions);
+    const users = await User.find({})
+      .sort(sortOptions)
+      .select("-password")
+      .lean();
     return NextResponse.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);

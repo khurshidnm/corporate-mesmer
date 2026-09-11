@@ -20,7 +20,7 @@ export async function GET(
     await connectDB();
 
     const resolvedParams = await params;
-    const user = await User.findById(resolvedParams.id);
+    const user = await User.findById(resolvedParams.id).select("-password").lean();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
