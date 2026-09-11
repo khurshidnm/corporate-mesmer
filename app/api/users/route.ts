@@ -121,21 +121,6 @@ export async function POST(request: NextRequest) {
       object_name,
     } = body;
 
-    // Check if user already exists (normalize the same way the schema does)
-    const normalizedEmail =
-      typeof email === "string" ? email.trim().toLowerCase() : email;
-    const existingUser = await User.findOne({ email: normalizedEmail });
-    if (existingUser) {
-      return NextResponse.json(
-        {
-          error: `User already exists: ${existingUser.email}${
-            existingUser.hidden ? " (hidden from list)" : ""
-          }`,
-        },
-        { status: 400 }
-      );
-    }
-
     // Get the highest order_id if not provided
     let finalOrderId = order_id;
     if (finalOrderId === undefined || finalOrderId === null) {
