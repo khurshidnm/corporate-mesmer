@@ -11,6 +11,13 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import fs from "fs";
+import { webcrypto } from "node:crypto";
+
+// Node 18 doesn't expose `crypto` as a global by default (only Next.js's
+// runtime polyfills it); the mongodb driver needs it for session handling.
+if (!globalThis.crypto) {
+  globalThis.crypto = webcrypto;
+}
 
 const envContent = fs.readFileSync(".env", "utf8");
 for (const line of envContent.split("\n")) {
