@@ -73,6 +73,7 @@ export async function PUT(
       viewPermissions,
       order_id,
       object_name,
+      hidden,
     } = body;
 
     const updateData: any = {
@@ -100,6 +101,10 @@ export async function PUT(
 
       if (object_name) {
         updateData.object_name = object_name;
+      }
+
+      if (hidden !== undefined) {
+        updateData.hidden = hidden;
       }
     }
 

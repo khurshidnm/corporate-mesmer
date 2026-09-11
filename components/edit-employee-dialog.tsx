@@ -31,6 +31,7 @@ interface EditEmployeeDialogProps {
   onOpenChange: (open: boolean) => void;
   user: User;
   onUpdate: (user: User) => void;
+  userRole?: "admin" | "worker";
 }
 
 export function EditEmployeeDialog({
@@ -38,6 +39,7 @@ export function EditEmployeeDialog({
   onOpenChange,
   user,
   onUpdate,
+  userRole,
 }: EditEmployeeDialogProps) {
   const [formData, setFormData] = useState<UpdateUserData>({
     name: user.name || { ru: "", en: "" },
@@ -54,6 +56,7 @@ export function EditEmployeeDialog({
     viewPermissions: user.viewPermissions,
     order_id: user.order_id,
     object_name: user.object_name || { ru: "", en: "" },
+    hidden: user.hidden || false,
   });
   const { t } = useTranslation();
 
@@ -391,6 +394,23 @@ export function EditEmployeeDialog({
                   className="border-gray-300 focus:border-blue-500 text-sm"
                 />
               </div>
+
+              {userRole === "admin" && (
+                <div className="flex items-center gap-2">
+                  <input
+                    id="hidden"
+                    type="checkbox"
+                    checked={formData.hidden || false}
+                    onChange={(e) =>
+                      setFormData({ ...formData, hidden: e.target.checked })
+                    }
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="hidden" className="text-sm font-medium">
+                    {t("form.hiddenFromList")}
+                  </Label>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 pt-4">

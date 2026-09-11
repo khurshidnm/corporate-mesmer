@@ -15,6 +15,11 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
+    // Hidden users (e.g. a super admin account) are excluded from the list
+    // for regular workers, but stay visible to admins so they remain manageable.
+    const visibilityFilter =
+      session.user?.role === "admin" ? {} : { hidden: { $ne: true } };
+
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get("sortBy") || "order_id";
     const order = searchParams.get("order") || "asc";
@@ -22,7 +27,7 @@ export async function GET(request: NextRequest) {
     let sortOptions: any = {};
 
     if (sortBy === "birthday") {
-      const users = await User.find({}).select("-password").lean();
+      const users = await User.find(visibilityFilter).select("-password").lean();
       const today = new Date();
       const currentYear = today.getFullYear();
 
@@ -75,7 +80,7 @@ export async function GET(request: NextRequest) {
       sortOptions = { [sortBy]: order === "desc" ? -1 : 1 };
     }
 
-    const users = await User.find({})
+    const users = await User.find(visibilityFilter)
       .sort(sortOptions)
       .select("-password")
       .lean();

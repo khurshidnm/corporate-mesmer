@@ -252,6 +252,7 @@ export function EmployeeCard({
           onOpenChange={setShowEditDialog}
           user={user}
           onUpdate={onUpdate}
+          userRole={userRole}
         />
       )}
     </>

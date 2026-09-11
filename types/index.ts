@@ -21,6 +21,7 @@ export interface User {
     ru: string;
     en: string;
   };
+  hidden?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -47,6 +48,7 @@ export interface CreateUserData {
     ru: string;
     en: string;
   };
+  hidden?: boolean;
 }
 
 export interface UpdateUserData {
@@ -71,6 +73,7 @@ export interface UpdateUserData {
     ru: string;
     en: string;
   };
+  hidden?: boolean;
 }
 
 export interface BirthdayUser {

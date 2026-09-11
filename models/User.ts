@@ -23,6 +23,7 @@ export interface IUser extends Document {
     ru: string;
     en: string;
   };
+  hidden?: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -112,6 +113,10 @@ const UserSchema = new Schema<IUser>(
         required: [true, "English object name is required"],
         trim: true,
       },
+    },
+    hidden: {
+      type: Boolean,
+      default: false,
     },
   },
   {
