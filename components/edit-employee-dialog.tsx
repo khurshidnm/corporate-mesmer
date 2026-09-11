@@ -398,7 +398,8 @@ export function EditEmployeeDialog({
               {userRole === "admin" && (
                 <div className="flex items-center gap-2">
                   <input
-                    id="hidden"
+                    id="hiddenFromList"
+                    name="hiddenFromList"
                     type="checkbox"
                     checked={formData.hidden || false}
                     onChange={(e) =>
@@ -406,7 +407,7 @@ export function EditEmployeeDialog({
                     }
                     className="h-4 w-4"
                   />
-                  <Label htmlFor="hidden" className="text-sm font-medium">
+                  <Label htmlFor="hiddenFromList" className="text-sm font-medium">
                     {t("form.hiddenFromList")}
                   </Label>
                 </div>
