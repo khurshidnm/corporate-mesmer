@@ -203,10 +203,9 @@ async function migrateUserFields() {
         needsUpdate = true;
       }
 
-    if (needsUpdate) {
-      await User.findByIdAndUpdate(user._id, updateData);
-      console.log(`Updated user ${user.email} with missing fields`);
-    }
+        if (needsUpdate) {
+          await User.findByIdAndUpdate(user._id, updateData);
+          console.log(`Updated user ${user.email} with missing fields`);
+        }
+      }
   }
-}
-}
