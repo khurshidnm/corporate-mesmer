@@ -158,8 +158,8 @@ export function EmployeeCard({
             )}
           </div>
 
-          <div className="mb-4 flex items-center gap-3">
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-slate-100 ring-4 ring-slate-50">
+          <div className="mb-4 flex h-[120px] items-center justify-center lg:mb-5 lg:h-[200px]">
+            <div className="h-[100px] w-[100px] overflow-hidden rounded-full bg-slate-100 ring-4 ring-slate-50 lg:h-[180px] lg:w-[180px]">
               <Image
                 src={user.avatar || "/placeholder.svg"}
                 alt={getName()}
@@ -168,14 +168,15 @@ export function EmployeeCard({
                 className="h-full w-full object-cover"
               />
             </div>
-            <div className="min-w-0">
-              <h3 className="truncate text-sm font-semibold text-slate-900" title={getName()}>
-                {getName()}
-              </h3>
-              <p className="mt-1 line-clamp-2 text-xs font-medium uppercase tracking-wide text-blue-700">
-                {getPosition()}
-              </p>
-            </div>
+          </div>
+
+          <div className="mb-4 min-h-[58px] text-center lg:mb-5 lg:min-h-[64px]">
+            <h3 className="line-clamp-2 text-sm font-semibold text-slate-900 lg:text-base" title={getName()}>
+              {getName()}
+            </h3>
+            <p className="mt-1 line-clamp-2 text-xs font-medium uppercase tracking-wide text-blue-700">
+              {getPosition()}
+            </p>
           </div>
 
           <div className="space-y-3 border-t border-slate-100 pt-4 text-sm">
