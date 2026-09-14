@@ -83,12 +83,12 @@ export function Sidebar({
   return (
     <div
       className={cn(
-        "bg-white shadow-lg border-r border-gray-200 flex flex-col h-full transition-all duration-300",
+        "flex h-full flex-col border-r border-slate-200 bg-white shadow-[8px_0_28px_rgba(15,23,42,0.04)] transition-all duration-300",
         collapsed ? "w-[70px]" : "w-64"
       )}
     >
       {/* Logo Section */}
-      <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+      <div className="flex items-center justify-between border-b border-slate-100 p-4">
         {!collapsed && (
           <div className="flex items-center">
             <div className=" rounded-md p-1 mr-2">
@@ -115,7 +115,8 @@ export function Sidebar({
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="text-gray-500 hover:text-gray-700 lg:flex hidden items-center justify-center w-6 h-6 rounded-full hover:bg-gray-100"
+          className="hidden h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:flex"
+          aria-label="Toggle sidebar"
         >
           <ChevronRight
             className={cn(
@@ -127,7 +128,7 @@ export function Sidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="mt-6 flex-1 px-2">
+      <nav className="mt-6 flex-1 px-3">
         <div className="space-y-1">
           <TooltipProvider>
             {showTopManagers && (
@@ -136,10 +137,10 @@ export function Sidebar({
                   <button
                     onClick={() => onSectionChange("top_managers")}
                     className={cn(
-                      "flex items-center w-full px-3 py-2.5 text-left rounded-lg transition-colors",
+                      "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
                       selectedSection === "top_managers"
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-blue-600",
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-blue-50 hover:text-blue-700",
                       collapsed ? "justify-center" : ""
                     )}
                   >
@@ -167,10 +168,10 @@ export function Sidebar({
                   <button
                     onClick={() => onSectionChange("employees")}
                     className={cn(
-                      "flex items-center w-full px-3 py-2.5 text-left rounded-lg transition-colors",
+                      "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
                       selectedSection === "employees"
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-blue-600",
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-blue-50 hover:text-blue-700",
                       collapsed ? "justify-center" : ""
                     )}
                   >

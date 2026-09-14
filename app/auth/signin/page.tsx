@@ -51,23 +51,24 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#eef4ff] px-4 py-10">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-blue-700" />
       <div className="absolute top-4 right-4">
         <LanguageToggle />
       </div>
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+      <Card className="relative w-full max-w-md border-slate-200 bg-white shadow-xl shadow-blue-950/10">
+        <CardHeader className="space-y-4 pb-4 text-center">
           <Image
             src={"/mesmerlogo1.svg"}
             alt=""
             width={200}
             height={200}
-            className="mx-auto"
+            className="mx-auto h-16 w-auto"
           />
-          <CardDescription>{t("auth.signInToAccount")}</CardDescription>
+          <CardDescription className="text-slate-500">{t("auth.signInToAccount")}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <CardContent className="pb-7">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
@@ -88,7 +89,7 @@ export default function SignInPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800" disabled={loading}>
               {loading ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>

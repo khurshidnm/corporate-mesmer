@@ -336,7 +336,7 @@ export function EmployeeGrid({
   return (
     <div>
       {/* Mobile Controls - Fixed */}
-      <div className="flex flex-col gap-4 mb-6 lg:hidden sticky top-32 z-30 bg-white py-4 border-b border-gray-200 shadow-sm">
+      <div className="sticky top-32 z-30 mb-6 flex flex-col gap-4 border-b border-slate-200 bg-[#f4f7fb]/95 py-4 backdrop-blur lg:hidden">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -379,7 +379,7 @@ export function EmployeeGrid({
       </div>
 
       {/* Desktop Controls - Fixed */}
-      <div className="hidden lg:flex lg:flex-row gap-4 mb-8 sticky top-20 z-30 py-4 shadow-sm bg-white">
+      <div className="sticky top-20 z-30 mb-8 hidden gap-4 border-b border-slate-200 bg-[#f4f7fb]/95 py-4 backdrop-blur lg:flex lg:flex-row">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -471,7 +471,7 @@ export function EmployeeGrid({
       </div>
 
       {/* Employee Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 lg:gap-5">
         {filteredUsers.map((user) => (
           <EmployeeCard
             key={user._id}

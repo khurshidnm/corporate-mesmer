@@ -215,7 +215,7 @@ export default function DashboardPage() {
   const userRole = currentUser.role as "admin" | "worker";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="flex min-h-screen bg-[#f4f7fb]">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block h-screen sticky top-0 z-10">
         <Sidebar
@@ -281,7 +281,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="flex-1 min-h-screen flex flex-col">
         {/* Fixed Mobile Header */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 px-4 py-3 flex items-center justify-between z-40">
+        <div className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -309,10 +309,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Fixed Desktop Header */}
-        <div className="hidden lg:block fixed top-0 left-64 right-0 bg-white shadow-sm border-b border-gray-200 px-8 py-4 z-40">
+        <div className="fixed left-64 right-0 top-0 z-40 hidden border-b border-slate-200 bg-white/95 px-8 py-4 backdrop-blur lg:block">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-semibold text-slate-900">
                 {getSectionTitle()}
               </h1>
             </div>
@@ -324,14 +324,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Fixed Mobile Section Title */}
-        <div className="lg:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 z-30">
-          <h1 className="text-xl font-semibold text-gray-900">
+        <div className="fixed left-0 right-0 top-16 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+          <h1 className="text-xl font-semibold text-slate-900">
             {getSectionTitle()}
           </h1>
         </div>
 
         {/* Content with proper top padding to account for fixed headers */}
-        <div className="pt-32 lg:pt-20 p-4 lg:p-8 flex-1">
+        <div className="flex-1 p-4 pt-32 lg:p-8 lg:pt-20">
           <EmployeeGrid
             users={getFilteredUsers()}
             setUsers={setUsers}
