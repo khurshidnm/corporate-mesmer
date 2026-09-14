@@ -95,6 +95,7 @@ const translations = {
       title: "Фильтры",
       birthdays: "Дни рождения",
       filtersAndSorting: "Фильтры и сортировка",
+      showHiddenUsers: "Показать скрытых сотрудников",
     },
     birthday: {
       title: "День рождения сегодня!",
@@ -241,6 +242,7 @@ const translations = {
       title: "Filters",
       birthdays: "Birthdays",
       filtersAndSorting: "Filters and Sorting",
+      showHiddenUsers: "Show hidden users",
     },
     birthday: {
       title: "Birthday Today!",

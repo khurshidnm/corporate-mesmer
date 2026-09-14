@@ -22,6 +22,8 @@ import {
   Filter,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useTranslation } from "@/hooks/use-translation";
 import {
   Sheet,
@@ -59,6 +61,7 @@ export function EmployeeGrid({
   });
   const [birthdayFilterActive, setBirthdayFilterActive] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showHiddenUsers, setShowHiddenUsers] = useState(false);
   const { t } = useTranslation();
 
   // Filter users based on current user's view permissions
@@ -112,6 +115,10 @@ export function EmployeeGrid({
   };
 
   const filteredUsers = permissionFilteredUsers.filter((user) => {
+    if (user.hidden && !showHiddenUsers) {
+      return false;
+    }
+
     const searchLower = searchTerm.toLowerCase();
     return (
       getSearchableText(user?.name).toLowerCase().includes(searchLower) ||
@@ -266,6 +273,19 @@ export function EmployeeGrid({
 
   const FilterControls = () => (
     <div className="space-y-4">
+      {userRole === "admin" && (
+        <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
+          <Label htmlFor="showHiddenUsers" className="text-sm font-medium text-slate-700">
+            {t("filters.showHiddenUsers")}
+          </Label>
+          <Switch
+            id="showHiddenUsers"
+            checked={showHiddenUsers}
+            onCheckedChange={setShowHiddenUsers}
+          />
+        </div>
+      )}
+
       <div className="flex gap-2">
         <Select
           value={sortBy}
