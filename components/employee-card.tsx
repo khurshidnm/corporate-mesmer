@@ -124,15 +124,19 @@ export function EmployeeCard({
 
   return (
     <>
-      <Card className="bg-white border border-gray-200 hover:shadow-md transition-shadow duration-200 h-full flex flex-col">
-        <CardContent className="p-4 lg:p-6 flex-1 flex flex-col">
-          {/* Header with menu for admin - фиксированная высота */}
-          <div className="h-8 flex justify-end mb-2">
+      <Card className="group h-full overflow-hidden border border-slate-200 bg-white shadow-sm transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg">
+        <CardContent className="flex h-full flex-col p-4 lg:p-5">
+          <div className="flex h-7 items-center justify-end">
             {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="w-4 h-4 text-gray-400" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    aria-label={t("actions.edit")}
+                  >
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -154,93 +158,49 @@ export function EmployeeCard({
             )}
           </div>
 
-          {/* Avatar - фиксированная высота */}
-          <div className="h-[120px] lg:h-[200px] flex justify-center items-center mb-4 lg:mb-5">
-            <div className="w-[100px] h-[100px] lg:w-[180px] lg:h-[180px] rounded-full overflow-hidden bg-gray-100">
+          <div className="mb-4 flex h-[120px] items-center justify-center lg:mb-5 lg:h-[200px]">
+            <div className="h-[100px] w-[100px] overflow-hidden rounded-full bg-slate-100 ring-4 ring-slate-50 lg:h-[180px] lg:w-[180px]">
               <Image
                 src={user.avatar || "/placeholder.svg"}
                 alt={getName()}
                 width={200}
                 height={200}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
 
-          {/* Name and Position - фиксированная высота */}
-          <div className="h-[100px] lg:h-[120px] text-center mb-4 lg:mb-5 flex flex-col justify-center">
-            <h3 className="font-medium text-gray-900 mb-1 text-sm lg:text-base leading-tight break-words">
+          <div className="mb-4 min-h-[58px] text-center lg:mb-5 lg:min-h-[64px]">
+            <h3 className="line-clamp-2 text-sm font-semibold text-slate-900 lg:text-base" title={getName()}>
               {getName()}
             </h3>
-            <p className="text-xs lg:text-sm text-blue-600 font-medium uppercase tracking-wide leading-tight break-words">
+            <p className="mt-1 line-clamp-2 text-xs font-medium uppercase tracking-wide text-blue-700">
               {getPosition()}
             </p>
           </div>
 
-          {/* Contact Information - фиксированная высота */}
-          <div className="flex-1 flex flex-col">
-            {/* Основная контактная информация - таблица с фиксированными высотами строк */}
-            <div className="mb-4">
-              <table className="w-full border-collapse">
-                <tbody>
-                  {/* Email row - фиксированная высота */}
-                  <tr className="h-10 lg:h-16 ">
-                    <td className="w-8 lg:w-10 p-2 text-center align-top">
-                      <Mail className="w-3 h-3 lg:w-4 lg:h-4 text-blue-500 mx-auto" />
-                    </td>
-                    <td className="p-2 text-xs lg:text-sm text-gray-600 break-all leading-tight align-top">
-                      {user.email}
-                    </td>
-                  </tr>
-
-                  {/* Phone row - фиксированная высота */}
-                  <tr className="h-8 lg:h-8 ">
-                    <td className="w-8 lg:w-10 p-2 text-center align-top">
-                      <Phone className="w-3 h-3 lg:w-4 lg:h-4 text-blue-500 mx-auto" />
-                    </td>
-                    <td className="p-2 text-xs lg:text-sm text-gray-600 break-all leading-tight align-top">
-                      {user.phone}
-                    </td>
-                  </tr>
-
-                  {/* Building/Office row - фиксированная высота */}
-                  <tr className="h-8 lg:h-8">
-                    <td className="w-8 lg:w-10 p-2 text-center align-top">
-                      <Building className="w-3 h-3 lg:w-4 lg:h-4 text-blue-500 mx-auto" />
-                    </td>
-                    <td className="p-2 text-xs lg:text-sm text-gray-600 break-all leading-tight align-top">
-                      {getObjectName()}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <div className="space-y-3 border-t border-slate-100 pt-4 text-sm">
+            <div className="flex min-w-0 items-start gap-3 text-slate-600">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+              <span className="break-all leading-5">{user.email}</span>
             </div>
+            <div className="flex min-w-0 items-start gap-3 text-slate-600">
+              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+              <span className="leading-5">{user.phone}</span>
+            </div>
+            <div className="flex min-w-0 items-start gap-3 text-slate-600">
+              <Building className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+              <span className="line-clamp-2 leading-5">{getObjectName()}</span>
+            </div>
+          </div>
 
-            {/* Birthday info - фиксированная позиция внизу и фиксированная высота */}
-            <div className="mt-auto">
-              <table className="w-full border-collapse">
-                <tbody>
-                  <tr className="h-8 lg:h-8 ">
-                    <td className="w-8 lg:w-10 p-2 text-center align-top">
-                      <Calendar className="w-3 h-3 lg:w-4 lg:h-4 text-blue-500 mx-auto" />
-                    </td>
-                    <td className="p-2 align-top">
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-xs lg:text-sm text-gray-600 leading-tight break-words">
-                          {formatDate(user.birthday)}
-                        </span>
-                        <span
-                          className={`text-xs ${getBirthdayTextColor(
-                            daysUntilBirthday
-                          )} leading-tight break-words`}
-                        >
-                          {formatDaysUntilBirthday(daysUntilBirthday)}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <div className="mt-auto flex items-start gap-3 border-t border-slate-100 pt-4">
+            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-700">{formatDate(user.birthday)}</p>
+              <p className={`mt-0.5 text-xs ${getBirthdayTextColor(daysUntilBirthday)}`}>
+                {formatDaysUntilBirthday(daysUntilBirthday)}
+              </p>
             </div>
           </div>
         </CardContent>
