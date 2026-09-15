@@ -267,7 +267,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="flex-1 min-h-screen flex flex-col">
         {/* Fixed Mobile Header */}
-        <div className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -295,8 +295,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Fixed Desktop Header */}
-        <div className="fixed left-64 right-0 top-0 z-40 hidden border-b border-slate-200 bg-white/95 px-8 py-4 backdrop-blur lg:block">
-          <div className="flex items-center justify-between">
+        <div className="fixed left-64 right-0 top-0 z-40 hidden h-20 border-b border-slate-200 bg-white px-8 lg:block">
+          <div className="flex h-full items-center justify-between">
             <div>
               <h1 className="text-2xl font-semibold text-slate-900">
                 {getSectionTitle()}
@@ -310,14 +310,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Fixed Mobile Section Title */}
-        <div className="fixed left-0 right-0 top-16 z-30 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden">
+        <div className="fixed left-0 right-0 top-16 z-30 flex h-12 items-center border-b border-slate-200 bg-white px-4 lg:hidden">
           <h1 className="text-xl font-semibold text-slate-900">
             {getSectionTitle()}
           </h1>
         </div>
 
         {/* Content with proper top padding to account for fixed headers */}
-        <div className="flex-1 p-4 pt-32 lg:p-8 lg:pt-20">
+        <div className="flex-1 p-4 pt-28 lg:p-8 lg:pt-20">
           <EmployeeGrid
             users={getFilteredUsers()}
             loading={usersLoading}
