@@ -28,6 +28,11 @@ export default function DashboardPage() {
   );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [query, setQuery] = useState({ sortBy: "order_id", order: "asc" });
+  const PAGE_SIZE = 30;
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -39,6 +44,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (session) {
+      loadCurrentUser();
       loadUsers();
     }
   }, [session]);
@@ -53,65 +59,103 @@ export default function DashboardPage() {
     }
   }, [selectedSection, currentUser]);
 
-  const loadUsers = async () => {
+  const loadCurrentUser = async () => {
+    const userId = (session?.user as any)?.id;
+    if (!userId) return;
+
     try {
-      // Fetch users
-      const response = await fetch("/api/users");
-      if (response.ok) {
-        const fetchedUsers = await response.json();
-        setUsers(fetchedUsers);
+      const response = await fetch(`/api/users/${userId}`);
+      if (!response.ok) return;
 
-        // Find current user
-        const current = fetchedUsers.find(
-          (user: User) => user.email === session?.user?.email
+      const current: User = await response.json();
+      setCurrentUser(current);
+
+      // Only auto-navigate on initial load, not on subsequent reloads
+      if (isInitialLoad) {
+        // Try to restore saved section from localStorage first
+        const savedSection = localStorage.getItem(
+          `selectedSection_${current.email}`
         );
-        if (current) {
-          setCurrentUser(current);
 
-          // Only auto-navigate on initial load, not on subsequent reloads
-          if (isInitialLoad) {
-            // Try to restore saved section from localStorage first
-            const savedSection = localStorage.getItem(
-              `selectedSection_${current.email}`
-            );
+        if (
+          savedSection &&
+          (savedSection === "top_managers" || savedSection === "employees")
+        ) {
+          // Check if user has permission to access the saved section
+          const hasPermission =
+            (savedSection === "top_managers" &&
+              (current.role === "admin" ||
+                current.viewPermissions === "top_managers" ||
+                current.viewPermissions === "both")) ||
+            (savedSection === "employees" &&
+              (current.role === "admin" ||
+                current.viewPermissions === "employees" ||
+                current.viewPermissions === "both"));
 
-            if (
-              savedSection &&
-              (savedSection === "top_managers" || savedSection === "employees")
-            ) {
-              // Check if user has permission to access the saved section
-              const hasPermission =
-                (savedSection === "top_managers" &&
-                  (current.role === "admin" ||
-                    current.viewPermissions === "top_managers" ||
-                    current.viewPermissions === "both")) ||
-                (savedSection === "employees" &&
-                  (current.role === "admin" ||
-                    current.viewPermissions === "employees" ||
-                    current.viewPermissions === "both"));
-
-              if (hasPermission) {
-                setSelectedSection(savedSection);
-              } else {
-                // If no permission for saved section, use default logic
-                setDefaultSection(current);
-              }
-            } else {
-              // No saved section, use default logic
-              setDefaultSection(current);
-            }
-            setIsInitialLoad(false); // Mark that initial load is complete
+          if (hasPermission) {
+            setSelectedSection(savedSection);
+          } else {
+            // If no permission for saved section, use default logic
+            setDefaultSection(current);
           }
-
-          // Check for today's birthdays
-          await checkTodayBirthdays();
+        } else {
+          // No saved section, use default logic
+          setDefaultSection(current);
         }
+        setIsInitialLoad(false); // Mark that initial load is complete
+      }
+
+      // Check for today's birthdays
+      await checkTodayBirthdays();
+    } catch (error) {
+      console.error("Error loading current user:", error);
+    }
+  };
+
+  // Fetches one page of the user directory. `replace` resets the list (new sort/reload),
+  // otherwise the page is appended for infinite scroll.
+  const fetchUsersPage = async (
+    pageNum: number,
+    opts: { sortBy: string; order: string },
+    replace: boolean
+  ) => {
+    try {
+      const params = new URLSearchParams({
+        page: String(pageNum),
+        limit: String(PAGE_SIZE),
+        sortBy: opts.sortBy,
+        order: opts.order,
+      });
+      const response = await fetch(`/api/users?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers((prev) => (replace ? data.users : [...prev, ...data.users]));
+        setHasMore(data.hasMore);
+        setPage(data.page);
       }
     } catch (error) {
       console.error("Error loading users:", error);
-    } finally {
-      setLoading(false);
     }
+  };
+
+  const loadUsers = async () => {
+    setLoading(true);
+    await fetchUsersPage(1, query, true);
+    setLoading(false);
+  };
+
+  const loadMoreUsers = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    await fetchUsersPage(page + 1, query, false);
+    setLoadingMore(false);
+  };
+
+  const handleSortChange = async (sortBy: string, order: string) => {
+    setQuery({ sortBy, order });
+    setLoading(true);
+    await fetchUsersPage(1, { sortBy, order }, true);
+    setLoading(false);
   };
 
   const setDefaultSection = (current: User) => {
@@ -162,12 +206,8 @@ export default function DashboardPage() {
 
   const reloadUsers = async () => {
     try {
-      const response = await fetch("/api/users");
-      if (response.ok) {
-        const fetchedUsers = await response.json();
-        setUsers(fetchedUsers);
-        // Note: We don't reset selectedSection here to preserve user's choice
-      }
+      await fetchUsersPage(1, query, true);
+      // Note: We don't reset selectedSection here to preserve user's choice
     } catch (error) {
       console.error("Error reloading users:", error);
     }
@@ -339,6 +379,10 @@ export default function DashboardPage() {
             currentUserId={currentUser._id}
             currentUser={currentUser}
             onReload={reloadUsers}
+            onSortChange={handleSortChange}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            onLoadMore={loadMoreUsers}
           />
         </div>
       </div>

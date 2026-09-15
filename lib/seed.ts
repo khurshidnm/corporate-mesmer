@@ -2,7 +2,15 @@ import connectDB from "./mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
+declare global {
+  // eslint-disable-next-line no-var
+  var _dbSeeded: boolean | undefined;
+}
+
 export async function seedDatabase() {
+  // Only needs to run once per server process, not on every login attempt.
+  if (global._dbSeeded) return;
+
   try {
     await connectDB();
 
@@ -15,6 +23,7 @@ export async function seedDatabase() {
 
     await migrateUserFields();
 
+    global._dbSeeded = true;
     console.log("Database seeding completed successfully");
   } catch (error) {
     console.error("Error seeding database:", error);

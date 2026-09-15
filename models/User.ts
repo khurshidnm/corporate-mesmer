@@ -78,6 +78,9 @@ const UserSchema = new Schema<IUser>(
     avatar: {
       type: String,
       default: "/placeholder.svg?height=100&width=100",
+      // Defense in depth: compressed avatars are ~50-100KB; this just blocks
+      // anything that somehow bypassed the compression step from being stored.
+      maxlength: 2_000_000,
     },
     role: {
       type: String,

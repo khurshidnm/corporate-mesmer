@@ -4,6 +4,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import bcrypt from "bcryptjs";
+import { compressAvatar, InvalidImageError } from "@/lib/image";
 
 // GET single user
 export async function GET(
@@ -82,7 +83,7 @@ export async function PUT(
       phone,
       position,
       birthday: new Date(birthday),
-      avatar,
+      avatar: await compressAvatar(avatar),
     };
 
     if (session.user?.role === "admin") {
@@ -143,6 +144,10 @@ export async function PUT(
     return NextResponse.json(userResponse);
   } catch (error: any) {
     console.error("Error updating user:", error);
+
+    if (error instanceof InvalidImageError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
 
     if (error?.name === "ValidationError") {
       const messages = Object.values(error.errors || {}).map(

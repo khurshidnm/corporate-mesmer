@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { EmployeeCard } from "./employee-card";
 import { AddEmployeeDialog } from "./add-employee-dialog";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,10 @@ interface EmployeeGridProps {
   currentUserId?: string;
   currentUser?: User;
   onReload: () => void;
+  onSortChange: (sortBy: string, order: string) => void;
+  hasMore: boolean;
+  loadingMore: boolean;
+  onLoadMore: () => void;
 }
 
 export function EmployeeGrid({
@@ -50,6 +54,10 @@ export function EmployeeGrid({
   currentUserId,
   currentUser,
   onReload,
+  onSortChange,
+  hasMore,
+  loadingMore,
+  onLoadMore,
 }: EmployeeGridProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -62,6 +70,7 @@ export function EmployeeGrid({
   const [birthdayFilterActive, setBirthdayFilterActive] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showHiddenUsers, setShowHiddenUsers] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const { t } = useTranslation();
 
   // Filter users based on current user's view permissions
@@ -194,45 +203,23 @@ export function EmployeeGrid({
     }
   };
 
-  const handleSortChange = async (newSortBy: string) => {
+  const handleSortChange = (newSortBy: string) => {
     // Если включаем не birthday сортировку, отключаем birthday фильтр
     if (newSortBy !== "birthday") {
       setBirthdayFilterActive(false);
     }
 
     setSortBy(newSortBy);
-
-    try {
-      const response = await fetch(
-        `/api/users?sortBy=${newSortBy}&order=${sortOrder}`
-      );
-      if (response.ok) {
-        const sortedUsers = await response.json();
-        setUsers(sortedUsers);
-      }
-    } catch (error) {
-      console.error("Error sorting users:", error);
-    }
+    onSortChange(newSortBy, sortOrder);
   };
 
-  const toggleSortOrder = async () => {
+  const toggleSortOrder = () => {
     const newOrder = sortOrder === "asc" ? "desc" : "asc";
     setSortOrder(newOrder);
-
-    try {
-      const response = await fetch(
-        `/api/users?sortBy=${sortBy}&order=${newOrder}`
-      );
-      if (response.ok) {
-        const sortedUsers = await response.json();
-        setUsers(sortedUsers);
-      }
-    } catch (error) {
-      console.error("Error sorting users:", error);
-    }
+    onSortChange(sortBy, newOrder);
   };
 
-  const toggleBirthdayFilter = async () => {
+  const toggleBirthdayFilter = () => {
     if (!birthdayFilterActive) {
       // Сохраняем текущую сортировку перед включением фильтра по дням рождения
       setPreviousSort({ by: sortBy, order: sortOrder });
@@ -241,35 +228,31 @@ export function EmployeeGrid({
       setBirthdayFilterActive(true);
       setSortBy("birthday");
       setSortOrder("asc");
-
-      try {
-        const response = await fetch(`/api/users?sortBy=birthday&order=asc`);
-        if (response.ok) {
-          const sortedUsers = await response.json();
-          setUsers(sortedUsers);
-        }
-      } catch (error) {
-        console.error("Error sorting users by birthday:", error);
-      }
+      onSortChange("birthday", "asc");
     } else {
       // Отключаем фильтр и возвращаемся к предыдущей сортировке
       setBirthdayFilterActive(false);
       setSortBy(previousSort.by);
       setSortOrder(previousSort.order);
-
-      try {
-        const response = await fetch(
-          `/api/users?sortBy=${previousSort.by}&order=${previousSort.order}`
-        );
-        if (response.ok) {
-          const sortedUsers = await response.json();
-          setUsers(sortedUsers);
-        }
-      } catch (error) {
-        console.error("Error restoring previous sort:", error);
-      }
+      onSortChange(previousSort.by, previousSort.order);
     }
   };
+
+  // Observes a sentinel div after the last card; fetches the next page once it scrolls into view
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observerRef.current) observerRef.current.disconnect();
+      if (!node || loadingMore || !hasMore) return;
+
+      observerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      });
+      observerRef.current.observe(node);
+    },
+    [loadingMore, hasMore, onLoadMore]
+  );
 
   const FilterControls = () => (
     <div className="space-y-4">
@@ -512,6 +495,14 @@ export function EmployeeGrid({
             {t("employees.notFound")}
           </h3>
           <p className="text-gray-500">{t("employees.tryChangingFilters")}</p>
+        </div>
+      )}
+
+      {/* Infinite scroll sentinel - fetches next page of users as it comes into view */}
+      {!searchTerm && <div ref={sentinelRef} className="h-1" />}
+      {loadingMore && (
+        <div className="flex justify-center py-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       )}
 
