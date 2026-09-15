@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "compress-avatars": "tsx --env-file=.env scripts/compress-avatars.ts"
+    "compress-avatars": "tsx -r dotenv/config scripts/compress-avatars.ts"
   },
   "dependencies": {
     "@auth/core": "latest",
@@ -72,6 +72,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.23.13",
