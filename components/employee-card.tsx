@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { LazyAvatar } from "./lazy-avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -159,15 +159,11 @@ export function EmployeeCard({
           </div>
 
           <div className="mb-4 flex h-[120px] items-center justify-center lg:mb-5 lg:h-[200px]">
-            <div className="h-[100px] w-[100px] overflow-hidden rounded-full bg-slate-100 ring-4 ring-slate-50 lg:h-[180px] lg:w-[180px]">
-              <Image
-                src={user.avatar || "/placeholder.svg"}
-                alt={getName()}
-                width={200}
-                height={200}
-                className="h-full w-full object-cover"
-              />
-            </div>
+            <LazyAvatar
+              src={user.avatar || "/placeholder.svg"}
+              alt={getName()}
+              className="h-[100px] w-[100px] rounded-full ring-4 ring-slate-50 lg:h-[180px] lg:w-[180px]"
+            />
           </div>
 
           <div className="mb-4 min-h-[58px] text-center lg:mb-5 lg:min-h-[64px]">

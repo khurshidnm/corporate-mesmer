@@ -8,6 +8,7 @@ import { useTranslation } from "@/hooks/use-translation";
 import { useLanguage } from "@/hooks/use-language";
 import { getLocalizedText } from "@/lib/utils";
 import type { BirthdayUser } from "@/types";
+import { LazyAvatar } from "./lazy-avatar";
 
 interface TeamBirthdayModalProps {
   users: BirthdayUser[];
@@ -99,13 +100,11 @@ export function TeamBirthdayModal({
                 key={user._id || index}
                 className="flex items-start space-x-4"
               >
-                <div className="w-16 h-16 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
-                  <img
-                    src={user.avatar || "/placeholder.svg"}
-                    alt={getLocalizedText(user.name, language)}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                <LazyAvatar
+                  src={user.avatar || "/placeholder.svg"}
+                  alt={getLocalizedText(user.name, language)}
+                  className="w-16 h-16 rounded-full border border-gray-200 flex-shrink-0"
+                />
                 <div className="flex-1 min-w-0 space-y-1">
                   <h3 className="font-medium text-gray-900 leading-tight break-words">
                     {getLocalizedText(user.name, language)}

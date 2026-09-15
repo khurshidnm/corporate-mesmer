@@ -16,6 +16,7 @@ import { BirthdayWelcomeModal } from "./birthday-welcome-modal";
 import { useLanguage } from "@/hooks/use-language";
 import { getLocalizedText } from "@/lib/utils";
 import type { BirthdayUser } from "@/types";
+import { LazyAvatar } from "./lazy-avatar";
 
 export function BirthdayNotificationBell() {
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<BirthdayUser[]>(
@@ -116,13 +117,11 @@ export function BirthdayNotificationBell() {
                     }`}
                     onClick={() => handleUserClick(user)}
                   >
-                    <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 mt-1">
-                      <img
-                        src={user.avatar || "/placeholder.svg"}
-                        alt={getLocalizedText(user.name, language)}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                    <LazyAvatar
+                      src={user.avatar || "/placeholder.svg"}
+                      alt={getLocalizedText(user.name, language)}
+                      className="w-10 h-10 lg:w-12 lg:h-12 rounded-full flex-shrink-0 mt-1"
+                    />
                     <div className="flex-1 min-w-0 space-y-1 max-w-[200px] lg:max-w-[250px]">
                       <p className="font-medium text-sm lg:text-base text-gray-900 leading-tight break-all word-wrap overflow-wrap-anywhere hyphens-auto">
                         {getLocalizedText(user.name, language)}
