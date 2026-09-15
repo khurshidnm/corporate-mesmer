@@ -1,6 +1,13 @@
+import { webcrypto } from "crypto";
 import connectDB from "../lib/mongodb";
 import User from "../models/User";
 import { storeAvatar } from "../lib/avatar";
+
+// The mongodb driver uses the Web Crypto global, which Node 18 doesn't expose.
+// Next.js polyfills it for the app; standalone scripts have to do it themselves.
+if (!globalThis.crypto) {
+  (globalThis as any).crypto = webcrypto;
+}
 
 // One-off migration: move inline base64 avatars out of User documents into the
 // Avatar collection (compressing them on the way) and replace User.avatar with
