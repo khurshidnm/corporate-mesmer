@@ -78,8 +78,9 @@ const UserSchema = new Schema<IUser>(
     avatar: {
       type: String,
       default: "/placeholder.svg?height=100&width=100",
-      // Defense in depth: compressed avatars are ~50-100KB; this just blocks
-      // anything that somehow bypassed the compression step from being stored.
+      // Holds a short URL (see lib/avatar.ts); image bytes live in the Avatar
+      // collection. The generous limit only exists so legacy inline base64
+      // avatars still validate until `pnpm migrate-avatars` has been run.
       maxlength: 2_000_000,
     },
     role: {

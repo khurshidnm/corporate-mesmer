@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "compress-avatars": "tsx -r dotenv/config scripts/compress-avatars.ts"
+    "migrate-avatars": "tsx -r dotenv/config scripts/migrate-avatars.ts"
   },
   "dependencies": {
     "@auth/core": "latest",

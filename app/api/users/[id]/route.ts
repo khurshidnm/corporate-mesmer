@@ -4,7 +4,9 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import bcrypt from "bcryptjs";
-import { compressAvatar, InvalidImageError } from "@/lib/image";
+import Avatar from "@/models/Avatar";
+import { storeAvatar } from "@/lib/avatar";
+import { InvalidImageError } from "@/lib/image";
 
 // GET single user
 export async function GET(
@@ -83,7 +85,7 @@ export async function PUT(
       phone,
       position,
       birthday: new Date(birthday),
-      avatar: await compressAvatar(avatar),
+      avatar: await storeAvatar(resolvedParams.id, avatar),
     };
 
     if (session.user?.role === "admin") {
@@ -201,6 +203,8 @@ export async function DELETE(
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    await Avatar.deleteOne({ user: resolvedParams.id });
 
     return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {

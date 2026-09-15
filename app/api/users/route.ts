@@ -1,9 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import Avatar from "@/models/Avatar";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { compressAvatar, InvalidImageError } from "@/lib/image";
+import { storeAvatar } from "@/lib/avatar";
+import { InvalidImageError } from "@/lib/image";
 
 // GET all users
 export async function GET(request: NextRequest) {
@@ -157,6 +160,10 @@ export async function GET(request: NextRequest) {
 
 // POST create new user
 export async function POST(request: NextRequest) {
+  // Generated up front so the avatar can be stored under the user's id before
+  // the document exists; cleaned up below if creation fails.
+  const userId = new mongoose.Types.ObjectId();
+
   try {
     const session = await getServerSession(authOptions);
 
@@ -190,6 +197,7 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await User.create({
+      _id: userId,
       name,
       email,
       password,
@@ -197,7 +205,9 @@ export async function POST(request: NextRequest) {
       position,
       birthday: new Date(birthday),
       role,
-      avatar: (await compressAvatar(avatar)) || "/placeholder.svg?height=100&width=100",
+      avatar:
+        (await storeAvatar(userId.toString(), avatar)) ||
+        "/placeholder.svg?height=100&width=100",
       workerType,
       viewPermissions: viewPermissions || "both",
       order_id: finalOrderId,
@@ -207,6 +217,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(user, { status: 201 });
   } catch (error: any) {
     console.error("Error creating user:", error);
+
+    // Don't leave an orphaned image behind if the user was never created
+    await Avatar.deleteOne({ user: userId }).catch(() => {});
 
     if (error instanceof InvalidImageError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

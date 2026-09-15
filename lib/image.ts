@@ -9,17 +9,12 @@ const MAX_INPUT_BYTES = 15 * 1024 * 1024;
 export class InvalidImageError extends Error {}
 
 /**
- * Re-encodes a base64 data URL avatar into a small JPEG (capped at MAX_DIMENSION,
- * quality JPEG_QUALITY). Non data-URL values (e.g. "/placeholder.svg", external
- * URLs) are returned unchanged. Throws InvalidImageError if the payload isn't a
- * valid, reasonably sized image so callers can reject the request with a 400.
+ * Decodes a base64 image data URL and re-encodes it as a small JPEG (capped at
+ * MAX_DIMENSION, quality JPEG_QUALITY). Throws InvalidImageError if the payload
+ * isn't a valid, reasonably sized image so callers can reject the request with a 400.
  */
-export async function compressAvatar(avatar?: string): Promise<string | undefined> {
-  if (!avatar || !avatar.startsWith("data:image")) {
-    return avatar;
-  }
-
-  const base64 = avatar.split(",")[1];
+export async function compressImage(dataUrl: string): Promise<Buffer> {
+  const base64 = dataUrl.split(",")[1];
   if (!base64) {
     throw new InvalidImageError("Malformed image data URL");
   }
@@ -30,13 +25,11 @@ export async function compressAvatar(avatar?: string): Promise<string | undefine
   }
 
   try {
-    const outputBuffer = await sharp(inputBuffer)
+    return await sharp(inputBuffer)
       .rotate() // respect EXIF orientation
       .resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "cover" })
       .jpeg({ quality: JPEG_QUALITY })
       .toBuffer();
-
-    return `data:image/jpeg;base64,${outputBuffer.toString("base64")}`;
   } catch (error) {
     throw new InvalidImageError("Uploaded file is not a valid image");
   }
