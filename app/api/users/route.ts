@@ -8,8 +8,10 @@ import { authOptions } from "../auth/[...nextauth]/route";
 import { storeAvatar } from "@/lib/avatar";
 import { InvalidImageError } from "@/lib/image";
 
-// GET all users
-export async function GET(request: NextRequest) {
+// GET all users. The directory is small (~150 people) and avatars are URLs,
+// so the whole list fits in one small response; sorting and search happen on
+// the client.
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -24,131 +26,12 @@ export async function GET(request: NextRequest) {
     const visibilityFilter =
       session.user?.role === "admin" ? {} : { hidden: { $ne: true } };
 
-    const { searchParams } = new URL(request.url);
-    const sortBy = searchParams.get("sortBy") || "order_id";
-    const order = searchParams.get("order") || "asc";
-    const search = (searchParams.get("search") || "").trim().slice(0, 100);
-
-    // Pagination is opt-in via `page`/`limit`. Omitting `page` returns the
-    // full (filtered) list, which callers rely on for client-side search.
-    const pageParam = searchParams.get("page");
-    const page = Math.max(1, Number.parseInt(pageParam || "1", 10) || 1);
-    const limit = Math.min(
-      100,
-      Math.max(1, Number.parseInt(searchParams.get("limit") || "30", 10) || 30)
-    );
-    const paginate = pageParam !== null;
-
-    let searchFilter: any = {};
-    if (search) {
-      // Escape regex metacharacters so user input can't build an arbitrary/expensive pattern
-      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(escaped, "i");
-      searchFilter = {
-        $or: [
-          { "name.ru": regex },
-          { "name.en": regex },
-          { "position.ru": regex },
-          { "position.en": regex },
-          { "object_name.ru": regex },
-          { "object_name.en": regex },
-          { email: regex },
-        ],
-      };
-    }
-
-    const filter = { ...visibilityFilter, ...searchFilter };
-
-    let sortOptions: any = {};
-
-    if (sortBy === "birthday") {
-      const users = await User.find(filter).select("-password").lean();
-      const today = new Date();
-      const currentYear = today.getFullYear();
-
-      const usersWithDays = users
-        .map((user) => {
-          if (!user.birthday) return null;
-
-          const birthday = new Date(user.birthday);
-          if (isNaN(birthday.getTime())) return null;
-
-          let nextBirthday = new Date(
-            currentYear,
-            birthday.getMonth(),
-            birthday.getDate()
-          );
-          if (nextBirthday < today) {
-            nextBirthday.setFullYear(currentYear + 1);
-          }
-
-          const daysUntil = Math.ceil(
-            (nextBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-          );
-
-          return {
-            ...user,
-            daysUntilBirthday: daysUntil,
-          };
-        })
-        .filter(Boolean); // remove nulls
-
-      const sortedUsers = usersWithDays.sort((a, b) =>
-        order === "desc"
-          ? b.daysUntilBirthday - a.daysUntilBirthday
-          : a.daysUntilBirthday - b.daysUntilBirthday
-      );
-
-      if (!paginate) {
-        return NextResponse.json(sortedUsers);
-      }
-
-      const total = sortedUsers.length;
-      const start = (page - 1) * limit;
-      const pagedUsers = sortedUsers.slice(start, start + limit);
-      return NextResponse.json({
-        users: pagedUsers,
-        total,
-        page,
-        hasMore: start + limit < total,
-      });
-    }
-
-    // All other sorts
-    if (sortBy === "order_id") {
-      sortOptions = { order_id: order === "desc" ? -1 : 1, createdAt: -1 };
-    } else if (sortBy === "object_name") {
-      sortOptions = { "object_name.ru": order === "desc" ? -1 : 1 };
-    } else if (sortBy === "name") {
-      sortOptions = { "name.ru": order === "desc" ? -1 : 1 };
-    } else if (sortBy === "position") {
-      sortOptions = { "position.ru": order === "desc" ? -1 : 1 };
-    } else {
-      sortOptions = { [sortBy]: order === "desc" ? -1 : 1 };
-    }
-
-    if (!paginate) {
-      const users = await User.find(filter)
-        .sort(sortOptions)
-        .select("-password")
-        .lean();
-      return NextResponse.json(users);
-    }
-
-    const total = await User.countDocuments(filter);
-    const users = await User.find(filter)
-      .sort(sortOptions)
-      .skip((page - 1) * limit)
-      .limit(limit)
+    const users = await User.find(visibilityFilter)
+      .sort({ order_id: 1, createdAt: -1 })
       .select("-password")
       .lean();
 
-    return NextResponse.json({
-      users,
-      total,
-      page,
-      hasMore: page * limit < total,
-    });
+    return NextResponse.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(

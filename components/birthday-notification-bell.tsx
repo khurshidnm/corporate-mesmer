@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Bell, Gift, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,31 +18,19 @@ import { getLocalizedText } from "@/lib/utils";
 import type { BirthdayUser } from "@/types";
 import { LazyAvatar } from "./lazy-avatar";
 
-export function BirthdayNotificationBell() {
-  const [upcomingBirthdays, setUpcomingBirthdays] = useState<BirthdayUser[]>(
-    []
-  );
+interface BirthdayNotificationBellProps {
+  /** Birthdays in the next 7 days, fetched once by the page and shared */
+  birthdays: BirthdayUser[];
+}
+
+export function BirthdayNotificationBell({
+  birthdays: upcomingBirthdays,
+}: BirthdayNotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showBirthdayModal, setShowBirthdayModal] = useState(false);
   const [showTeamBirthdayModal, setShowTeamBirthdayModal] = useState(false);
   const { t } = useTranslation();
   const { language } = useLanguage();
-
-  useEffect(() => {
-    fetchUpcomingBirthdays();
-  }, []);
-
-  const fetchUpcomingBirthdays = async () => {
-    try {
-      const response = await fetch("/api/users/upcoming-birthdays?days=7");
-      if (response.ok) {
-        const data = await response.json();
-        setUpcomingBirthdays(data);
-      }
-    } catch (error) {
-      console.error("Error fetching upcoming birthdays:", error);
-    }
-  };
 
   const formatDaysUntil = (days: number) => {
     if (days === 0) return language === "ru" ? "Сегодня" : "Today";
@@ -53,10 +41,6 @@ export function BirthdayNotificationBell() {
   const handleUserClick = (user: BirthdayUser) => {
     setIsOpen(false);
     if (user.daysUntilBirthday === 0) {
-      // Get all users with birthdays today
-      const todayUsers = upcomingBirthdays.filter(
-        (u) => u.daysUntilBirthday === 0
-      );
       setShowTeamBirthdayModal(true);
     } else {
       setShowBirthdayModal(true);
@@ -157,6 +141,7 @@ export function BirthdayNotificationBell() {
 
       {/* Birthday Modals */}
       <BirthdayWelcomeModal
+        users={upcomingBirthdays}
         open={showBirthdayModal}
         onOpenChange={setShowBirthdayModal}
       />

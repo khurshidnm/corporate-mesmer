@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,44 +16,19 @@ import { getLocalizedText } from "@/lib/utils";
 import type { BirthdayUser } from "@/types";
 
 interface BirthdayWelcomeModalProps {
+  /** Birthdays in the next 7 days, fetched once by the page and shared */
+  users: BirthdayUser[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function BirthdayWelcomeModal({
+  users: birthdayUsers,
   open,
   onOpenChange,
 }: BirthdayWelcomeModalProps) {
-  const [birthdayUsers, setBirthdayUsers] = useState<BirthdayUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
   const { language } = useLanguage();
-
-  useEffect(() => {
-    if (open) {
-      fetchBirthdayUsers();
-    }
-  }, [open]);
-
-  useEffect(() => {
-    fetchBirthdayUsers();
-  }, []);
-
-  const fetchBirthdayUsers = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/users/upcoming-birthdays?days=0");
-      if (response.ok) {
-        const data = await response.json();
-        setBirthdayUsers(data);
-        console.log(data);
-      }
-    } catch (error) {
-      console.error("Error fetching birthday users:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const todayBirthdays = birthdayUsers.filter(
     (user) => user.daysUntilBirthday === 0
@@ -68,18 +42,6 @@ export function BirthdayWelcomeModal({
     if (days === 1) return t("birthday.tomorrow");
     return t("birthday.inDays", { days });
   };
-
-  if (loading) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <div className="flex items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   if (birthdayUsers.length === 0) {
     return null;

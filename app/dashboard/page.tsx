@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { EmployeeGrid } from "@/components/employee-grid";
 import { BirthdayNotificationBell } from "@/components/birthday-notification-bell";
-import { BirthdayWelcomeModal } from "@/components/birthday-welcome-modal";
 import { TeamBirthdayModal } from "@/components/team-birthday-modal";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useTranslation } from "@/hooks/use-translation";
@@ -18,22 +17,19 @@ import Image from "next/image";
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<User[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedSection, setSelectedSection] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [showBirthdayModal, setShowBirthdayModal] = useState(false);
-  const [showTeamBirthdayModal, setShowTeamBirthdayModal] = useState(false);
-  const [todayBirthdayUsers, setTodayBirthdayUsers] = useState<BirthdayUser[]>(
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState<BirthdayUser[]>(
     []
   );
+  const [showTeamBirthdayModal, setShowTeamBirthdayModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [query, setQuery] = useState({ sortBy: "order_id", order: "asc" });
-  const PAGE_SIZE = 30;
   const { t } = useTranslation();
+
+  // next-auth hands out a new session object on every refetch (e.g. when the
+  // tab regains focus), so key the initial load on the stable user id instead.
+  const sessionUserId = (session?.user as any)?.id as string | undefined;
 
   useEffect(() => {
     if (status === "loading") return;
@@ -43,11 +39,11 @@ export default function DashboardPage() {
   }, [session, status]);
 
   useEffect(() => {
-    if (session) {
-      loadCurrentUser();
-      loadUsers();
-    }
-  }, [session]);
+    if (!sessionUserId) return;
+    loadCurrentUser(sessionUserId);
+    loadUsers();
+    loadBirthdays();
+  }, [sessionUserId]);
 
   // Save selected section to localStorage whenever it changes
   useEffect(() => {
@@ -59,10 +55,7 @@ export default function DashboardPage() {
     }
   }, [selectedSection, currentUser]);
 
-  const loadCurrentUser = async () => {
-    const userId = (session?.user as any)?.id;
-    if (!userId) return;
-
+  const loadCurrentUser = async (userId: string) => {
     try {
       const response = await fetch(`/api/users/${userId}`);
       if (!response.ok) return;
@@ -70,92 +63,78 @@ export default function DashboardPage() {
       const current: User = await response.json();
       setCurrentUser(current);
 
-      // Only auto-navigate on initial load, not on subsequent reloads
-      if (isInitialLoad) {
-        // Try to restore saved section from localStorage first
-        const savedSection = localStorage.getItem(
-          `selectedSection_${current.email}`
-        );
+      // Restore the last opened section if the user may still access it
+      const savedSection = localStorage.getItem(
+        `selectedSection_${current.email}`
+      );
 
-        if (
-          savedSection &&
-          (savedSection === "top_managers" || savedSection === "employees")
-        ) {
-          // Check if user has permission to access the saved section
-          const hasPermission =
-            (savedSection === "top_managers" &&
-              (current.role === "admin" ||
-                current.viewPermissions === "top_managers" ||
-                current.viewPermissions === "both")) ||
-            (savedSection === "employees" &&
-              (current.role === "admin" ||
-                current.viewPermissions === "employees" ||
-                current.viewPermissions === "both"));
+      if (
+        savedSection &&
+        (savedSection === "top_managers" || savedSection === "employees")
+      ) {
+        const hasPermission =
+          (savedSection === "top_managers" &&
+            (current.role === "admin" ||
+              current.viewPermissions === "top_managers" ||
+              current.viewPermissions === "both")) ||
+          (savedSection === "employees" &&
+            (current.role === "admin" ||
+              current.viewPermissions === "employees" ||
+              current.viewPermissions === "both"));
 
-          if (hasPermission) {
-            setSelectedSection(savedSection);
-          } else {
-            // If no permission for saved section, use default logic
-            setDefaultSection(current);
-          }
+        if (hasPermission) {
+          setSelectedSection(savedSection);
         } else {
-          // No saved section, use default logic
           setDefaultSection(current);
         }
-        setIsInitialLoad(false); // Mark that initial load is complete
+      } else {
+        setDefaultSection(current);
       }
-
-      // Check for today's birthdays
-      await checkTodayBirthdays();
     } catch (error) {
       console.error("Error loading current user:", error);
     }
   };
 
-  // Fetches one page of the user directory. `replace` resets the list (new sort/reload),
-  // otherwise the page is appended for infinite scroll.
-  const fetchUsersPage = async (
-    pageNum: number,
-    opts: { sortBy: string; order: string },
-    replace: boolean
-  ) => {
+  // The whole directory comes down in one small response (avatars are URLs);
+  // sorting, search and section filtering are all done on the client.
+  const loadUsers = async () => {
     try {
-      const params = new URLSearchParams({
-        page: String(pageNum),
-        limit: String(PAGE_SIZE),
-        sortBy: opts.sortBy,
-        order: opts.order,
-      });
-      const response = await fetch(`/api/users?${params}`);
+      const response = await fetch("/api/users");
       if (response.ok) {
-        const data = await response.json();
-        setUsers((prev) => (replace ? data.users : [...prev, ...data.users]));
-        setHasMore(data.hasMore);
-        setPage(data.page);
+        setUsers(await response.json());
       }
     } catch (error) {
       console.error("Error loading users:", error);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
-  const loadUsers = async () => {
-    setLoading(true);
-    await fetchUsersPage(1, query, true);
-    setLoading(false);
-  };
+  // One request serves both the notification bell (next 7 days) and the
+  // "someone has a birthday today" modal.
+  const loadBirthdays = async () => {
+    try {
+      const response = await fetch("/api/users/upcoming-birthdays?days=7");
+      if (!response.ok) return;
 
-  const loadMoreUsers = async () => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    await fetchUsersPage(page + 1, query, false);
-    setLoadingMore(false);
-  };
+      const birthdays: BirthdayUser[] = await response.json();
+      setUpcomingBirthdays(birthdays);
 
-  const handleSortChange = async (sortBy: string, order: string) => {
-    setQuery({ sortBy, order });
-    setLoading(true);
-    await fetchUsersPage(1, { sortBy, order }, true);
-    setLoading(false);
+      const hasBirthdayToday = birthdays.some((u) => u.daysUntilBirthday === 0);
+      const today = new Date().toDateString();
+      if (
+        hasBirthdayToday &&
+        localStorage.getItem("teamBirthdayModalShown") !== today
+      ) {
+        // Slight delay so the page is fully painted before the modal appears
+        setTimeout(() => {
+          setShowTeamBirthdayModal(true);
+          localStorage.setItem("teamBirthdayModalShown", today);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("Error loading birthdays:", error);
+    }
   };
 
   const setDefaultSection = (current: User) => {
@@ -171,46 +150,11 @@ export default function DashboardPage() {
     }
   };
 
-  const checkTodayBirthdays = async () => {
-    try {
-      const response = await fetch("/api/users/upcoming-birthdays?days=0");
-      if (response.ok) {
-        const birthdayUsers: BirthdayUser[] = await response.json();
-        if (birthdayUsers.length > 0) {
-          setTodayBirthdayUsers(birthdayUsers);
-
-          // Check if modal was shown today
-          const today = new Date().toDateString();
-          const lastShown = localStorage.getItem("teamBirthdayModalShown");
-
-          if (lastShown !== today) {
-            // Show the modal with a slight delay to ensure the page is fully loaded
-            setTimeout(() => {
-              setShowTeamBirthdayModal(true);
-              localStorage.setItem("teamBirthdayModalShown", today);
-            }, 1000);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error checking today's birthdays:", error);
-    }
-  };
-
   const handleUserUpdate = (updatedUser: User) => {
     setCurrentUser(updatedUser);
     setUsers((prev) =>
       prev.map((user) => (user._id === updatedUser._id ? updatedUser : user))
     );
-  };
-
-  const reloadUsers = async () => {
-    try {
-      await fetchUsersPage(1, query, true);
-      // Note: We don't reset selectedSection here to preserve user's choice
-    } catch (error) {
-      console.error("Error reloading users:", error);
-    }
   };
 
   const handleSectionChange = (section: string) => {
@@ -240,16 +184,18 @@ export default function DashboardPage() {
     return t("dashboard.allEmployees");
   };
 
-  if (loading) {
+  const todayBirthdayUsers = upcomingBirthdays.filter(
+    (user) => user.daysUntilBirthday === 0
+  );
+
+  // Only the session check and the tiny current-user request gate the page;
+  // the directory itself renders as skeleton cards until it arrives.
+  if (!session || !currentUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
-
-  if (!session || !currentUser) {
-    return null;
   }
 
   const userRole = currentUser.role as "admin" | "worker";
@@ -343,7 +289,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <BirthdayNotificationBell />
+            <BirthdayNotificationBell birthdays={upcomingBirthdays} />
             <LanguageToggle />
           </div>
         </div>
@@ -357,7 +303,7 @@ export default function DashboardPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <BirthdayNotificationBell />
+              <BirthdayNotificationBell birthdays={upcomingBirthdays} />
               <LanguageToggle />
             </div>
           </div>
@@ -374,24 +320,14 @@ export default function DashboardPage() {
         <div className="flex-1 p-4 pt-32 lg:p-8 lg:pt-20">
           <EmployeeGrid
             users={getFilteredUsers()}
-            setUsers={setUsers}
+            loading={usersLoading}
             userRole={userRole}
             currentUserId={currentUser._id}
             currentUser={currentUser}
-            onReload={reloadUsers}
-            onSortChange={handleSortChange}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            onLoadMore={loadMoreUsers}
+            onReload={loadUsers}
           />
         </div>
       </div>
-
-      {/* Birthday Welcome Modal */}
-      <BirthdayWelcomeModal
-        open={showBirthdayModal}
-        onOpenChange={setShowBirthdayModal}
-      />
 
       {/* Team Birthday Modal - shows to everyone when someone has a birthday */}
       <TeamBirthdayModal

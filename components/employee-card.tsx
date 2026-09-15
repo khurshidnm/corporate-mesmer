@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { LazyAvatar } from "./lazy-avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { daysUntilBirthday as daysUntil } from "@/lib/birthday";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,46 +65,7 @@ export function EmployeeCard({
   // Только админ может редактировать и удалять пользователей
   const canEdit = userRole === "admin";
 
-  // Calculate days until birthday
-  const today = new Date();
-  const birthday = new Date(user.birthday);
-  const currentYear = today.getFullYear();
-
-  // Сбрасываем время до начала дня для точного сравнения
-  const todayStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const thisYearBirthday = new Date(
-    currentYear,
-    birthday.getMonth(),
-    birthday.getDate()
-  );
-  const nextYearBirthday = new Date(
-    currentYear + 1,
-    birthday.getMonth(),
-    birthday.getDate()
-  );
-
-  let daysUntilBirthday: number;
-
-  // Проверяем, сегодня ли день рождения
-  if (todayStart.getTime() === thisYearBirthday.getTime()) {
-    daysUntilBirthday = 0;
-  } else if (thisYearBirthday > todayStart) {
-    // День рождения еще не прошел в этом году
-    daysUntilBirthday = Math.ceil(
-      (thisYearBirthday.getTime() - todayStart.getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
-  } else {
-    // День рождения уже прошел в этом году, считаем до следующего года
-    daysUntilBirthday = Math.ceil(
-      (nextYearBirthday.getTime() - todayStart.getTime()) /
-        (1000 * 60 * 60 * 24)
-    );
-  }
+  const daysUntilBirthday = daysUntil(user.birthday) ?? 0;
 
   const formatDaysUntilBirthday = (days: number) => {
     if (days === 0) return t("birthday.todayBirthday");
@@ -212,5 +175,31 @@ export function EmployeeCard({
         />
       )}
     </>
+  );
+}
+
+// Placeholder shown while the directory is loading; mirrors the card layout
+// so the grid doesn't reflow when the real cards arrive.
+export function EmployeeCardSkeleton() {
+  return (
+    <Card className="h-full overflow-hidden border border-slate-200 bg-white shadow-sm">
+      <CardContent className="flex h-full flex-col p-4 lg:p-5">
+        <div className="mb-4 flex h-[120px] items-center justify-center lg:mb-5 lg:h-[200px]">
+          <Skeleton className="h-[100px] w-[100px] rounded-full lg:h-[180px] lg:w-[180px]" />
+        </div>
+        <div className="mb-4 flex min-h-[58px] flex-col items-center gap-2 lg:mb-5 lg:min-h-[64px]">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+        <div className="space-y-3 border-t border-slate-100 pt-4">
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

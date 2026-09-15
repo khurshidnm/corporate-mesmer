@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { EmployeeCard } from "./employee-card";
+import { useState, useMemo } from "react";
+import { EmployeeCard, EmployeeCardSkeleton } from "./employee-card";
 import { AddEmployeeDialog } from "./add-employee-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useTranslation } from "@/hooks/use-translation";
+import { useLanguage } from "@/hooks/use-language";
+import { getLocalizedText } from "@/lib/utils";
+import { daysUntilBirthday } from "@/lib/birthday";
 import {
   Sheet,
   SheetContent,
@@ -36,28 +39,23 @@ import type { User, CreateUserData, MultiLanguageText } from "@/types";
 
 interface EmployeeGridProps {
   users: User[];
-  setUsers: (users: User[]) => void;
+  /** True until the directory has been fetched; skeleton cards are shown meanwhile */
+  loading?: boolean;
   userRole: "admin" | "worker";
   currentUserId?: string;
   currentUser?: User;
   onReload: () => void;
-  onSortChange: (sortBy: string, order: string) => void;
-  hasMore: boolean;
-  loadingMore: boolean;
-  onLoadMore: () => void;
 }
+
+const SKELETON_COUNT = 10;
 
 export function EmployeeGrid({
   users,
-  setUsers,
+  loading = false,
   userRole,
   currentUserId,
   currentUser,
   onReload,
-  onSortChange,
-  hasMore,
-  loadingMore,
-  onLoadMore,
 }: EmployeeGridProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -70,46 +68,8 @@ export function EmployeeGrid({
   const [birthdayFilterActive, setBirthdayFilterActive] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showHiddenUsers, setShowHiddenUsers] = useState(false);
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const { t } = useTranslation();
-
-  // Filter users based on current user's view permissions
-  const getFilteredUsersByPermissions = (allUsers: User[]) => {
-    // Admin can see everyone
-    if (userRole === "admin") {
-      return allUsers;
-    }
-
-    // If no current user, return empty array for safety
-    if (!currentUser) {
-      console.log("No current user found");
-      return [];
-    }
-
-    const { viewPermissions } = currentUser;
-
-    const filtered = allUsers.filter((user) => {
-      // Always show admins to everyone
-      if (user.role === "admin") {
-        return true;
-      }
-
-      // Filter based on permissions
-      if (viewPermissions === "both") {
-        return true;
-      } else if (viewPermissions === "top_managers") {
-        return user.workerType === "top_manager";
-      } else if (viewPermissions === "employees") {
-        return user.workerType === "employee";
-      }
-
-      return false;
-    });
-
-    return filtered;
-  };
-
-  const permissionFilteredUsers = getFilteredUsersByPermissions(users);
+  const { language } = useLanguage();
 
   const getSearchableText = (
     text: string | MultiLanguageText | undefined
@@ -123,21 +83,74 @@ export function EmployeeGrid({
     return "";
   };
 
-  const filteredUsers = permissionFilteredUsers.filter((user) => {
-    if (user.hidden && !showHiddenUsers) {
-      return false;
+  // Permission filter -> hidden/search filter -> sort, all on the client: the
+  // whole directory is only ~150 people, so this is instant and needs no
+  // round trip.
+  const visibleUsers = useMemo(() => {
+    let result = users;
+
+    // Admin can see everyone; workers only what their viewPermissions allow
+    if (userRole !== "admin") {
+      if (!currentUser) return [];
+      const { viewPermissions } = currentUser;
+      result = result.filter((user) => {
+        if (user.role === "admin") return true; // Always show admins to everyone
+        if (viewPermissions === "both") return true;
+        if (viewPermissions === "top_managers")
+          return user.workerType === "top_manager";
+        if (viewPermissions === "employees")
+          return user.workerType === "employee";
+        return false;
+      });
     }
 
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      getSearchableText(user?.name).toLowerCase().includes(searchLower) ||
-      getSearchableText(user?.position).toLowerCase().includes(searchLower) ||
-      getSearchableText(user?.object_name)
-        .toLowerCase()
-        .includes(searchLower) ||
-      user?.email?.toLowerCase().includes(searchLower)
-    );
-  });
+    const searchLower = searchTerm.trim().toLowerCase();
+    result = result.filter((user) => {
+      if (user.hidden && !showHiddenUsers) return false;
+      if (!searchLower) return true;
+      return (
+        getSearchableText(user?.name).toLowerCase().includes(searchLower) ||
+        getSearchableText(user?.position).toLowerCase().includes(searchLower) ||
+        getSearchableText(user?.object_name)
+          .toLowerCase()
+          .includes(searchLower) ||
+        user?.email?.toLowerCase().includes(searchLower)
+      );
+    });
+
+    // Birthday mode only makes sense for people with a valid birthday
+    if (sortBy === "birthday") {
+      result = result.filter((user) => daysUntilBirthday(user.birthday) !== null);
+    }
+
+    const collator = new Intl.Collator([language, "ru", "en"], {
+      sensitivity: "base",
+    });
+    const byText = (pick: (u: User) => MultiLanguageText | string | undefined) =>
+      (a: User, b: User) =>
+        collator.compare(
+          getLocalizedText(pick(a), language),
+          getLocalizedText(pick(b), language)
+        );
+
+    const compare: (a: User, b: User) => number =
+      sortBy === "name"
+        ? byText((u) => u.name)
+        : sortBy === "position"
+        ? byText((u) => u.position)
+        : sortBy === "object_name"
+        ? byText((u) => u.object_name)
+        : sortBy === "birthday"
+        ? (a, b) =>
+            (daysUntilBirthday(a.birthday) ?? 0) -
+            (daysUntilBirthday(b.birthday) ?? 0)
+        : (a, b) =>
+            (a.order_id ?? 0) - (b.order_id ?? 0) ||
+            Date.parse(b.createdAt ?? "") - Date.parse(a.createdAt ?? "");
+
+    const direction = sortOrder === "desc" ? -1 : 1;
+    return [...result].sort((a, b) => direction * compare(a, b));
+  }, [users, userRole, currentUser, searchTerm, showHiddenUsers, sortBy, sortOrder, language]);
 
   const handleAddUser = async (newUser: CreateUserData) => {
     try {
@@ -210,13 +223,10 @@ export function EmployeeGrid({
     }
 
     setSortBy(newSortBy);
-    onSortChange(newSortBy, sortOrder);
   };
 
   const toggleSortOrder = () => {
-    const newOrder = sortOrder === "asc" ? "desc" : "asc";
-    setSortOrder(newOrder);
-    onSortChange(sortBy, newOrder);
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
   const toggleBirthdayFilter = () => {
@@ -228,31 +238,13 @@ export function EmployeeGrid({
       setBirthdayFilterActive(true);
       setSortBy("birthday");
       setSortOrder("asc");
-      onSortChange("birthday", "asc");
     } else {
       // Отключаем фильтр и возвращаемся к предыдущей сортировке
       setBirthdayFilterActive(false);
       setSortBy(previousSort.by);
       setSortOrder(previousSort.order);
-      onSortChange(previousSort.by, previousSort.order);
     }
   };
-
-  // Observes a sentinel div after the last card; fetches the next page once it scrolls into view
-  const sentinelRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (observerRef.current) observerRef.current.disconnect();
-      if (!node || loadingMore || !hasMore) return;
-
-      observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          onLoadMore();
-        }
-      });
-      observerRef.current.observe(node);
-    },
-    [loadingMore, hasMore, onLoadMore]
-  );
 
   const FilterControls = () => (
     <div className="space-y-4">
@@ -473,36 +465,32 @@ export function EmployeeGrid({
         )}
       </div>
 
-      {/* Employee Grid */}
+      {/* Employee Grid — skeleton cards until the directory arrives */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 lg:gap-5">
-        {filteredUsers.map((user) => (
-          <EmployeeCard
-            key={user._id}
-            user={user}
-            userRole={userRole}
-            currentUserId={currentUserId}
-            onUpdate={handleUpdateUser}
-            onDelete={handleDeleteUser}
-          />
-        ))}
+        {loading
+          ? Array.from({ length: SKELETON_COUNT }, (_, i) => (
+              <EmployeeCardSkeleton key={i} />
+            ))
+          : visibleUsers.map((user) => (
+              <EmployeeCard
+                key={user._id}
+                user={user}
+                userRole={userRole}
+                currentUserId={currentUserId}
+                onUpdate={handleUpdateUser}
+                onDelete={handleDeleteUser}
+              />
+            ))}
       </div>
 
       {/* Empty State */}
-      {filteredUsers.length === 0 && (
+      {!loading && visibleUsers.length === 0 && (
         <div className="text-center py-12">
           <UserIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             {t("employees.notFound")}
           </h3>
           <p className="text-gray-500">{t("employees.tryChangingFilters")}</p>
-        </div>
-      )}
-
-      {/* Infinite scroll sentinel - fetches next page of users as it comes into view */}
-      {!searchTerm && <div ref={sentinelRef} className="h-1" />}
-      {loadingMore && (
-        <div className="flex justify-center py-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       )}
 
