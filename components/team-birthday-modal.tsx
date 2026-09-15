@@ -1,14 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Gift, Cake, Calendar } from "lucide-react";
-import { useTranslation } from "@/hooks/use-translation";
+import { Gift } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { getLocalizedText } from "@/lib/utils";
 import type { BirthdayUser } from "@/types";
 import { LazyAvatar } from "./lazy-avatar";
+import {
+  BirthdayConfetti,
+  FestiveRing,
+  FloatingDecorations,
+} from "./birthday-fx";
 
 interface TeamBirthdayModalProps {
   users: BirthdayUser[];
@@ -21,9 +25,9 @@ export function TeamBirthdayModal({
   open,
   onOpenChange,
 }: TeamBirthdayModalProps) {
-  const { t } = useTranslation();
   const { language } = useLanguage();
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
+  const [burst, setBurst] = useState(0);
 
   // Reset current user index when modal opens
   useEffect(() => {
@@ -44,148 +48,164 @@ export function TeamBirthdayModal({
 
   if (!users.length) return null;
 
-  // Show multiple users in column if 2-3 users, otherwise show carousel
-  const showMultipleUsers = users.length >= 2 && users.length <= 3;
-  const displayUsers = showMultipleUsers ? users : [users[currentUserIndex]];
+  // 2-3 people are listed together; one (or a carousel of many) gets the hero layout
+  const showList = users.length >= 2 && users.length <= 3;
+  const heroUser = users[currentUserIndex] ?? users[0];
+
+  const ru = language === "ru";
+  const celebrantsLabel = ru
+    ? `${users.length} ${users.length < 5 ? "именинника" : "именинников"}`
+    : `${users.length} people celebrating`;
+
+  // Closing with a fresh confetti burst so the celebration spills onto the page
+  const congratulate = () => {
+    setBurst((b) => b + 1);
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={`${
-          showMultipleUsers ? "sm:max-w-lg" : "sm:max-w-md"
-        } bg-white p-0 overflow-hidden`}
-      >
-        {/* Header */}
-        <div className="bg-blue-50 p-4 text-center border-b border-blue-100">
-          <div className="flex justify-center mb-2">
-            <div className="bg-blue-100 rounded-full p-2">
-              <Cake className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-          <h2 className="text-xl font-medium text-gray-900">
-            {language === "ru" ? "День Рождения" : "Birthday"}
-          </h2>
-          <p className="text-sm text-gray-600">
-            {language === "ru"
-              ? "Сегодня особенный день"
-              : "Today is a special day"}
-          </p>
-          {users.length > 1 && (
-            <p className="text-xs text-blue-600 mt-1">
-              {language === "ru"
-                ? `${users.length} ${
-                    users.length === 2
-                      ? "именинника"
-                      : users.length < 5
-                      ? "именинника"
-                      : "именинников"
-                  }`
-                : `${users.length} ${
-                    users.length === 1 ? "person" : "people"
-                  } celebrating`}
-            </p>
-          )}
-        </div>
+    <>
+      <BirthdayConfetti active={open} burst={burst} />
 
-        {/* Main content */}
-        <div className="p-5">
-          {/* Birthday people info */}
-          <div
-            className={`space-y-4 mb-4 ${
-              showMultipleUsers ? "max-h-64 overflow-y-auto" : ""
-            }`}
-          >
-            {displayUsers.map((user, index) => (
-              <div
-                key={user._id || index}
-                className="flex items-start space-x-4"
-              >
-                <LazyAvatar
-                  src={user.avatar || "/placeholder.svg"}
-                  alt={getLocalizedText(user.name, language)}
-                  className="w-16 h-16 rounded-full border border-gray-200 flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0 space-y-1">
-                  <h3 className="font-medium text-gray-900 leading-tight break-words">
-                    {getLocalizedText(user.name, language)}
-                  </h3>
-                  <p className="text-sm text-gray-500 leading-tight break-words">
-                    {getLocalizedText(user.position, language)}
-                  </p>
-                  {showMultipleUsers && (
-                    <div className="flex items-center mt-1">
-                      <Calendar className="w-3 h-3 text-blue-500 mr-1 flex-shrink-0" />
-                      <span className="text-xs text-blue-600">
-                        {language === "ru" ? "Сегодня" : "Today"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                {showMultipleUsers && (
-                  <div className="flex-shrink-0">
-                    <div className="bg-blue-100 rounded-full p-1">
-                      <Gift className="w-4 h-4 text-blue-600" />
-                    </div>
-                  </div>
-                )}
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className={`${
+            showList ? "sm:max-w-lg" : "sm:max-w-md"
+          } overflow-hidden border-0 bg-white p-0 shadow-2xl [&>button]:text-white [&>button]:opacity-80`}
+        >
+          {/* Header */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-fuchsia-600 px-6 pb-8 pt-8 text-center text-white">
+            <FloatingDecorations />
+            <div className="relative">
+              <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-white/20 shadow-lg ring-4 ring-white/30 backdrop-blur animate-pop-in">
+                <span className="text-4xl animate-wiggle motion-reduce:animate-none">
+                  🎂
+                </span>
               </div>
-            ))}
-          </div>
-
-          {/* Congratulatory message */}
-          <div className="bg-gray-50 rounded p-3 mb-4 border border-gray-100">
-            <p className="text-gray-700 text-sm text-center leading-relaxed break-words">
-              {showMultipleUsers ? (
-                language === "ru" ? (
-                  <>Поздравляем наших коллег с днём рождения! 🎉</>
-                ) : (
-                  <>Congratulations to our colleagues on their birthdays! 🎉</>
-                )
-              ) : (
-                <>
-                  {language === "ru" ? "Сегодня у" : "Today is"}{" "}
-                  <span className="font-medium break-words">
-                    {getLocalizedText(displayUsers[0].name, language)}
-                  </span>{" "}
-                  {language === "ru" ? "день рождения!" : "birthday!"}
-                </>
+              <DialogTitle className="text-2xl font-bold tracking-tight animate-pop-in [animation-delay:120ms]">
+                {ru ? "С Днём Рождения!" : "Happy Birthday!"}
+              </DialogTitle>
+              <p className="mt-1 text-sm text-white/85">
+                {ru ? "Сегодня особенный день" : "Today is a special day"}
+              </p>
+              {users.length > 1 && (
+                <span className="mt-3 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">
+                  🎉 {celebrantsLabel}
+                </span>
               )}
-            </p>
+            </div>
           </div>
 
-          {/* Multiple birthday people indicator for carousel (more than 3 users) */}
-          {users.length > 3 && (
-            <div className="flex justify-center space-x-1 mb-4">
-              {users.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === currentUserIndex ? "bg-blue-500" : "bg-gray-300"
-                  }`}
-                />
-              ))}
+          {/* Main content */}
+          <div className="p-5">
+            {showList ? (
+              <div className="mb-4 max-h-64 space-y-4 overflow-y-auto">
+                {users.map((user, index) => (
+                  <div
+                    key={user._id || index}
+                    className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500"
+                    style={{ animationDelay: `${index * 120}ms` }}
+                  >
+                    <FestiveRing>
+                      <LazyAvatar
+                        src={user.avatar || "/placeholder.svg"}
+                        alt={getLocalizedText(user.name, language)}
+                        className="h-14 w-14 rounded-full"
+                      />
+                    </FestiveRing>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold leading-tight text-gray-900 break-words">
+                        {getLocalizedText(user.name, language)}
+                      </h3>
+                      <p className="text-sm leading-tight text-gray-500 break-words">
+                        {getLocalizedText(user.position, language)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-2xl">🎉</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div
+                key={heroUser._id}
+                className="mb-4 flex flex-col items-center text-center animate-in fade-in slide-in-from-right-4 duration-500"
+              >
+                <div className="relative">
+                  <FestiveRing>
+                    <LazyAvatar
+                      src={heroUser.avatar || "/placeholder.svg"}
+                      alt={getLocalizedText(heroUser.name, language)}
+                      className="h-28 w-28 rounded-full"
+                    />
+                  </FestiveRing>
+                  <span className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl shadow-md ring-2 ring-pink-100 animate-bounce motion-reduce:animate-none">
+                    🎉
+                  </span>
+                </div>
+                <h3 className="mt-4 text-lg font-semibold leading-tight text-gray-900 break-words">
+                  {getLocalizedText(heroUser.name, language)}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 break-words">
+                  {getLocalizedText(heroUser.position, language)}
+                </p>
+              </div>
+            )}
+
+            {/* Congratulatory message */}
+            <div className="mb-4 rounded-lg border border-blue-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-fuchsia-50 p-3">
+              <p className="text-center text-sm leading-relaxed text-gray-700 break-words">
+                {showList ? (
+                  ru ? (
+                    <>Поздравляем наших коллег с днём рождения! 🎉</>
+                  ) : (
+                    <>Congratulations to our colleagues on their birthdays! 🎉</>
+                  )
+                ) : (
+                  <>
+                    {ru ? "Сегодня у" : "Today is"}{" "}
+                    <span className="font-semibold break-words">
+                      {getLocalizedText(heroUser.name, language)}
+                    </span>{" "}
+                    {ru ? "день рождения!" : "birthday!"}
+                  </>
+                )}
+              </p>
             </div>
-          )}
 
-          {/* Buttons */}
-          <Button
-            onClick={() => onOpenChange(false)}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            <Gift className="w-4 h-4 mr-2" />
-            {language === "ru" ? "Поздравить" : "Congratulate"}
-          </Button>
+            {/* Carousel indicator (more than 3 people) */}
+            {users.length > 3 && (
+              <div className="mb-4 flex justify-center space-x-1.5">
+                {users.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      index === currentUserIndex
+                        ? "w-5 bg-blue-600"
+                        : "w-2 bg-gray-300"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
 
-          {/* Additional info for many users */}
-          {users.length > 3 && (
-            <p className="text-xs text-center text-gray-500 mt-3 break-words">
-              {language === "ru"
-                ? `Всего ${users.length} именинников сегодня`
-                : `Total ${users.length} people celebrating today`}
-            </p>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+            <Button
+              onClick={congratulate}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md hover:from-blue-700 hover:to-indigo-700"
+            >
+              <Gift className="mr-2 h-4 w-4" />
+              {ru ? "Поздравить" : "Congratulate"}
+            </Button>
+
+            {users.length > 3 && (
+              <p className="mt-3 text-center text-xs text-gray-500 break-words">
+                {ru
+                  ? `Всего ${users.length} именинников сегодня`
+                  : `Total ${users.length} people celebrating today`}
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

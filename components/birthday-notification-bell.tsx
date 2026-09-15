@@ -51,6 +51,7 @@ export function BirthdayNotificationBell({
     (user) => user.daysUntilBirthday === 0
   );
   const totalCount = upcomingBirthdays.length;
+  const hasBirthdayToday = todayUsers.length > 0;
 
   return (
     <>
@@ -61,9 +62,19 @@ export function BirthdayNotificationBell({
             size="icon"
             className="relative hover:bg-gray-50 h-8 w-8 lg:h-10 lg:w-10"
           >
-            <Bell className="w-4 h-4 lg:w-5 lg:h-5 text-gray-600" />
+            <Bell
+              className={`w-4 h-4 lg:w-5 lg:h-5 origin-top ${
+                hasBirthdayToday
+                  ? "text-fuchsia-600 animate-bell-ring motion-reduce:animate-none"
+                  : "text-gray-600"
+              }`}
+            />
             {totalCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 lg:h-5 lg:w-5 rounded-full p-0 flex items-center justify-center text-xs bg-blue-600 text-white border-0">
+              <Badge
+                className={`absolute -top-1 -right-1 h-4 w-4 lg:h-5 lg:w-5 rounded-full p-0 flex items-center justify-center text-xs text-white border-0 ${
+                  hasBirthdayToday ? "bg-fuchsia-600" : "bg-blue-600"
+                }`}
+              >
                 {totalCount > 9 ? "9+" : totalCount}
               </Badge>
             )}

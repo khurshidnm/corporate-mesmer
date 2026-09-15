@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LazyAvatar } from "./lazy-avatar";
+import { FestiveRing } from "./birthday-fx";
 import { Skeleton } from "@/components/ui/skeleton";
 import { daysUntilBirthday as daysUntil } from "@/lib/birthday";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,6 +67,7 @@ export function EmployeeCard({
   const canEdit = userRole === "admin";
 
   const daysUntilBirthday = daysUntil(user.birthday) ?? 0;
+  const isBirthdayToday = daysUntilBirthday === 0;
 
   const formatDaysUntilBirthday = (days: number) => {
     if (days === 0) return t("birthday.todayBirthday");
@@ -87,7 +89,19 @@ export function EmployeeCard({
 
   return (
     <>
-      <Card className="group h-full overflow-hidden border border-slate-200 bg-white shadow-sm transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg">
+      <Card
+        className={`group relative h-full overflow-hidden border bg-white shadow-sm transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+          isBirthdayToday
+            ? "border-fuchsia-200 shadow-fuchsia-100 hover:border-fuchsia-300"
+            : "border-slate-200 hover:border-blue-200"
+        }`}
+      >
+        {isBirthdayToday && (
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-fuchsia-500 to-amber-400"
+          />
+        )}
         <CardContent className="flex h-full flex-col p-4 lg:p-5">
           <div className="flex h-7 items-center justify-end">
             {canEdit && (
@@ -122,11 +136,26 @@ export function EmployeeCard({
           </div>
 
           <div className="mb-4 flex h-[120px] items-center justify-center lg:mb-5 lg:h-[200px]">
-            <LazyAvatar
-              src={user.avatar || "/placeholder.svg"}
-              alt={getName()}
-              className="h-[100px] w-[100px] rounded-full ring-4 ring-slate-50 lg:h-[180px] lg:w-[180px]"
-            />
+            {isBirthdayToday ? (
+              <div className="relative">
+                <FestiveRing>
+                  <LazyAvatar
+                    src={user.avatar || "/placeholder.svg"}
+                    alt={getName()}
+                    className="h-[92px] w-[92px] rounded-full lg:h-[172px] lg:w-[172px]"
+                  />
+                </FestiveRing>
+                <span className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl shadow-md ring-2 ring-fuchsia-100 animate-bounce motion-reduce:animate-none lg:h-11 lg:w-11 lg:text-2xl">
+                  🎂
+                </span>
+              </div>
+            ) : (
+              <LazyAvatar
+                src={user.avatar || "/placeholder.svg"}
+                alt={getName()}
+                className="h-[100px] w-[100px] rounded-full ring-4 ring-slate-50 lg:h-[180px] lg:w-[180px]"
+              />
+            )}
           </div>
 
           <div className="mb-4 min-h-[58px] text-center lg:mb-5 lg:min-h-[64px]">
@@ -157,9 +186,15 @@ export function EmployeeCard({
             <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
             <div className="min-w-0">
               <p className="text-sm font-medium text-slate-700">{formatDate(user.birthday)}</p>
-              <p className={`mt-0.5 text-xs ${getBirthdayTextColor(daysUntilBirthday)}`}>
-                {formatDaysUntilBirthday(daysUntilBirthday)}
-              </p>
+              {isBirthdayToday ? (
+                <span className="mt-1 inline-block whitespace-nowrap rounded-full bg-gradient-to-r from-blue-600 to-fuchsia-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+                  {t("birthday.todayBirthdayShort")}
+                </span>
+              ) : (
+                <p className={`mt-0.5 text-xs ${getBirthdayTextColor(daysUntilBirthday)}`}>
+                  {formatDaysUntilBirthday(daysUntilBirthday)}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

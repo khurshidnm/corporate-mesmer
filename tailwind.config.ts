@@ -83,11 +83,40 @@ const config: Config = {
   				to: {
   					height: '0'
   				}
+  			},
+  			// Birthday celebration effects (see components/birthday-fx.tsx)
+  			float: {
+  				'0%, 100%': { transform: 'translateY(0) rotate(-4deg)' },
+  				'50%': { transform: 'translateY(-14px) rotate(4deg)' }
+  			},
+  			wiggle: {
+  				'0%, 100%': { transform: 'rotate(-8deg)' },
+  				'50%': { transform: 'rotate(8deg)' }
+  			},
+  			'pop-in': {
+  				'0%': { transform: 'scale(0.5)', opacity: '0' },
+  				'70%': { transform: 'scale(1.08)', opacity: '1' },
+  				'100%': { transform: 'scale(1)', opacity: '1' }
+  			},
+  			// Rings a few times, then rests for the remainder of the cycle
+  			'bell-ring': {
+  				'0%, 50%, 100%': { transform: 'rotate(0)' },
+  				'6%': { transform: 'rotate(16deg)' },
+  				'12%': { transform: 'rotate(-14deg)' },
+  				'18%': { transform: 'rotate(10deg)' },
+  				'24%': { transform: 'rotate(-7deg)' },
+  				'30%': { transform: 'rotate(4deg)' },
+  				'36%': { transform: 'rotate(-2deg)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			float: 'float 4s ease-in-out infinite',
+  			wiggle: 'wiggle 1.4s ease-in-out infinite',
+  			'pop-in': 'pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+  			'bell-ring': 'bell-ring 3s ease-in-out infinite',
+  			'spin-slow': 'spin 6s linear infinite'
   		}
   	}
   },
