@@ -167,7 +167,7 @@ export function EmployeeCard({
             </p>
           </div>
 
-          <div className="space-y-3 border-t border-slate-100 pt-4 text-sm">
+          <div className="mb-4 space-y-3 border-t border-slate-100 pt-4 text-sm">
             <div className="flex min-w-0 items-start gap-3 text-slate-600">
               <Mail className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
               <span className="break-all leading-5">{user.email}</span>
