@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUpload } from "./image-upload";
+import { TwoFactorSettings } from "./two-factor-settings";
 import { useTranslation } from "@/hooks/use-translation";
 import type { User, UpdateUserData, MultiLanguageText } from "@/types";
 import { Settings, Save, X } from "lucide-react";
@@ -315,6 +316,9 @@ export function ProfileSettings({
             </Button>
           </div>
         </form>
+
+        {/* Outside the form above: it has its own form and nested forms aren't allowed */}
+        <TwoFactorSettings />
       </DialogContent>
     </Dialog>
   );

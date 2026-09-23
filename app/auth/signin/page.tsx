@@ -18,10 +18,16 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/hooks/use-translation";
 import { LanguageToggle } from "@/components/language-toggle";
 import Image from "next/image";
+import { ShieldCheck } from "lucide-react";
+import { TWO_FACTOR_REQUIRED, TWO_FACTOR_INVALID, ACCOUNT_LOCKED } from "@/lib/auth-errors";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // Set once the password is accepted for an account with 2FA turned on
+  const [needsCode, setNeedsCode] = useState(false);
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
@@ -34,12 +40,23 @@ export default function SignInPage() {
       const result = await signIn("credentials", {
         email,
         password,
+        ...(needsCode && { code }),
         redirect: false,
       });
 
       if (result?.ok) {
         const session = await getSession();
         router.push("/dashboard");
+      } else if (result?.error === TWO_FACTOR_REQUIRED) {
+        setNeedsCode(true);
+      } else if (result?.error === ACCOUNT_LOCKED) {
+        alert(t("auth.accountLocked"));
+        setNeedsCode(false);
+        setCode("");
+        setPassword("");
+      } else if (result?.error === TWO_FACTOR_INVALID) {
+        setCodeError(t("auth.invalidCode"));
+        setCode("");
       } else {
         alert(t("auth.invalidCredentials"));
       }
@@ -68,6 +85,53 @@ export default function SignInPage() {
           <CardDescription className="text-slate-500">{t("auth.signInToAccount")}</CardDescription>
         </CardHeader>
         <CardContent className="pb-7">
+          {needsCode ? (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <ShieldCheck className="h-10 w-10 text-blue-700" />
+                <p className="text-sm text-slate-600">{t("auth.twoFactorPrompt")}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="code">{t("auth.twoFactorCode")}</Label>
+                <Input
+                  id="code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.replace(/\D/g, ""));
+                    setCodeError("");
+                  }}
+                  className="text-center text-lg tracking-[0.5em]"
+                  autoFocus
+                  required
+                />
+                {codeError && <p className="text-sm text-red-600">{codeError}</p>}
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-blue-700 hover:bg-blue-800"
+                disabled={loading || code.length !== 6}
+              >
+                {loading ? t("auth.signingIn") : t("auth.verify")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setNeedsCode(false);
+                  setCode("");
+                  setCodeError("");
+                  setPassword("");
+                }}
+              >
+                {t("auth.back")}
+              </Button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">{t("auth.email")}</Label>
@@ -93,6 +157,7 @@ export default function SignInPage() {
               {loading ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
+          )}
         </CardContent>
       </Card>
     </div>

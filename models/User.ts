@@ -26,6 +26,11 @@ export interface IUser extends Document {
   };
   hidden?: boolean;
   groups: UserGroup[];
+  twoFactorEnabled: boolean;
+  twoFactorSecret?: string;
+  twoFactorPendingSecret?: string;
+  failedLoginAttempts: number;
+  lockUntil?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -126,6 +131,32 @@ const UserSchema = new Schema<IUser>(
     groups: {
       type: [{ type: String, enum: USER_GROUP_IDS }],
       default: [],
+    },
+    // Google Authenticator (TOTP). Hidden from queries unless explicitly
+    // selected, so no user listing can leak the secret or who has 2FA.
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+      select: false,
+    },
+    twoFactorSecret: {
+      type: String,
+      select: false,
+    },
+    // Set while the user is scanning the QR code, before they confirm a code
+    twoFactorPendingSecret: {
+      type: String,
+      select: false,
+    },
+    // Login lockout, see lib/login-attempts
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    lockUntil: {
+      type: Date,
+      select: false,
     },
   },
   {

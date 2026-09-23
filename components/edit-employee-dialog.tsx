@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { ImageUpload } from "./image-upload";
 import { GroupCheckboxes } from "./group-checkboxes";
+import { AdminTwoFactorReset } from "./two-factor-settings";
 import { useTranslation } from "@/hooks/use-translation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -421,6 +422,8 @@ export function EditEmployeeDialog({
                   </Label>
                 </div>
               )}
+
+              {userRole === "admin" && open && <AdminTwoFactorReset userId={user._id} />}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 pt-4">

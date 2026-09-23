@@ -54,6 +54,8 @@
     "next-auth": "latest",
     "next-themes": "latest",
     "nodemailer": "latest",
+    "otplib": "^12",
+    "qrcode": "^1.5.4",
     "react": "^19",
     "react-confetti": "^6.4.0",
     "react-day-picker": "latest",
@@ -71,6 +73,7 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
