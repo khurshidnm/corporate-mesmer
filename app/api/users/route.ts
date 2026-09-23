@@ -7,6 +7,7 @@ import Avatar from "@/models/Avatar";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { storeAvatar } from "@/lib/avatar";
 import { InvalidImageError } from "@/lib/image";
+import { sanitizeGroups } from "@/lib/groups";
 
 // GET all users. The directory is small (~150 people) and avatars are URLs,
 // so the whole list fits in one small response; sorting and search happen on
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       viewPermissions,
       order_id,
       object_name,
+      groups,
     } = body;
 
     // Get the highest order_id if not provided
@@ -95,6 +97,7 @@ export async function POST(request: NextRequest) {
       viewPermissions: viewPermissions || "both",
       order_id: finalOrderId,
       object_name,
+      groups: sanitizeGroups(groups) || [],
     });
 
     return NextResponse.json(user, { status: 201 });

@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import Avatar from "@/models/Avatar";
 import { storeAvatar } from "@/lib/avatar";
 import { InvalidImageError } from "@/lib/image";
+import { sanitizeGroups } from "@/lib/groups";
 
 // GET single user
 export async function GET(
@@ -77,6 +78,7 @@ export async function PUT(
       order_id,
       object_name,
       hidden,
+      groups,
     } = body;
 
     const updateData: any = {
@@ -108,6 +110,11 @@ export async function PUT(
 
       if (hidden !== undefined) {
         updateData.hidden = hidden;
+      }
+
+      const cleanGroups = sanitizeGroups(groups);
+      if (cleanGroups) {
+        updateData.groups = cleanGroups;
       }
     }
 

@@ -1,5 +1,6 @@
 import mongoose, { type Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+import { USER_GROUP_IDS, type UserGroup } from "@/lib/groups";
 
 export interface IUser extends Document {
   name: {
@@ -24,6 +25,7 @@ export interface IUser extends Document {
     en: string;
   };
   hidden?: boolean;
+  groups: UserGroup[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -120,6 +122,10 @@ const UserSchema = new Schema<IUser>(
     hidden: {
       type: Boolean,
       default: false,
+    },
+    groups: {
+      type: [{ type: String, enum: USER_GROUP_IDS }],
+      default: [],
     },
   },
   {

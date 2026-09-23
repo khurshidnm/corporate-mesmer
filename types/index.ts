@@ -1,3 +1,5 @@
+import type { UserGroup } from "@/lib/groups";
+
 export interface User {
   _id: string;
   name: {
@@ -22,6 +24,7 @@ export interface User {
     en: string;
   };
   hidden?: boolean;
+  groups?: UserGroup[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -49,6 +52,7 @@ export interface CreateUserData {
     en: string;
   };
   hidden?: boolean;
+  groups?: UserGroup[];
 }
 
 export interface UpdateUserData {
@@ -74,6 +78,7 @@ export interface UpdateUserData {
     en: string;
   };
   hidden?: boolean;
+  groups?: UserGroup[];
 }
 
 export interface BirthdayUser {

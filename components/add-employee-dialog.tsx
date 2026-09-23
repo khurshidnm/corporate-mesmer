@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUpload } from "./image-upload";
+import { GroupCheckboxes } from "./group-checkboxes";
 import { useTranslation } from "@/hooks/use-translation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +51,7 @@ export function AddEmployeeDialog({
     viewPermissions: "both",
     order_id: 0,
     object_name: { ru: "", en: "" },
+    groups: [],
   });
   const { t } = useTranslation();
 
@@ -84,6 +86,7 @@ export function AddEmployeeDialog({
       viewPermissions: "both",
       order_id: 0,
       object_name: { ru: "", en: "" },
+      groups: [],
     });
     onOpenChange(false);
   };
@@ -410,6 +413,11 @@ export function AddEmployeeDialog({
                   className="border-gray-300 focus:border-blue-500 text-sm"
                 />
               </div>
+
+              <GroupCheckboxes
+                value={formData.groups || []}
+                onChange={(groups) => setFormData({ ...formData, groups })}
+              />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 pt-4">

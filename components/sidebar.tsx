@@ -9,6 +9,7 @@ import {
   Home,
   Calendar,
   ChevronRight,
+  Layers,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import type { User, MultiLanguageText } from "@/types";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { USER_GROUPS, GROUP_SECTION_PREFIX } from "@/lib/groups";
 import {
   Tooltip,
   TooltipContent,
@@ -191,7 +193,38 @@ export function Sidebar({
               </Tooltip>
             )}
 
-            {/* Additional navigation items */}
+            {/* Employee groups, assigned by admins */}
+            {USER_GROUPS.map((group) => {
+              const section = `${GROUP_SECTION_PREFIX}${group.id}`;
+              return (
+                <Tooltip key={group.id}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => onSectionChange(section)}
+                      className={cn(
+                        "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
+                        selectedSection === section
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "text-slate-600 hover:bg-blue-50 hover:text-blue-700",
+                        collapsed ? "justify-center" : ""
+                      )}
+                    >
+                      <Layers
+                        className={cn("w-5 h-5", collapsed ? "" : "mr-3")}
+                      />
+                      {!collapsed && (
+                        <span className="font-medium text-sm">
+                          {group.label}
+                        </span>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  {collapsed && (
+                    <TooltipContent side="right">{group.label}</TooltipContent>
+                  )}
+                </Tooltip>
+              );
+            })}
           </TooltipProvider>
         </div>
       </nav>

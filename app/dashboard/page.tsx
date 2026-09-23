@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import type { User, BirthdayUser } from "@/types";
 import Image from "next/image";
+import { USER_GROUPS, groupFromSection } from "@/lib/groups";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -68,7 +69,10 @@ export default function DashboardPage() {
         `selectedSection_${current.email}`
       );
 
-      if (
+      if (savedSection && groupFromSection(savedSection)) {
+        // Group sections are open to everyone
+        setSelectedSection(savedSection);
+      } else if (
         savedSection &&
         (savedSection === "top_managers" || savedSection === "employees")
       ) {
@@ -163,6 +167,10 @@ export default function DashboardPage() {
   };
 
   const getFilteredUsers = () => {
+    const group = groupFromSection(selectedSection);
+    if (group) {
+      return users.filter((user) => user.groups?.includes(group));
+    }
     if (selectedSection === "top_managers") {
       // Only show top managers, NOT admins
       return users.filter((user) => user.workerType === "top_manager");
@@ -176,6 +184,10 @@ export default function DashboardPage() {
   };
 
   const getSectionTitle = () => {
+    const group = groupFromSection(selectedSection);
+    if (group) {
+      return USER_GROUPS.find((g) => g.id === group)!.label;
+    }
     if (selectedSection === "top_managers") {
       return t("sidebar.topManagers");
     } else if (selectedSection === "employees") {
