@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { EmployeeCard, EmployeeCardSkeleton } from "./employee-card";
+import { EmployeeTable } from "./employee-table";
 import { AddEmployeeDialog } from "./add-employee-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,8 @@ import {
   UserIcon,
   Building,
   Filter,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +52,9 @@ interface EmployeeGridProps {
 
 const SKELETON_COUNT = 10;
 
+type ViewMode = "cards" | "table";
+const VIEW_STORAGE_KEY = "employeeView";
+
 export function EmployeeGrid({
   users,
   loading = false,
@@ -68,7 +74,22 @@ export function EmployeeGrid({
   const [birthdayFilterActive, setBirthdayFilterActive] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showHiddenUsers, setShowHiddenUsers] = useState(false);
+  const [view, setView] = useState<ViewMode>("cards");
   const { t } = useTranslation();
+
+  // Remembered per browser, like the language choice
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(VIEW_STORAGE_KEY) === "table") setView("table");
+    } catch {}
+  }, []);
+
+  const changeView = (next: ViewMode) => {
+    setView(next);
+    try {
+      localStorage.setItem(VIEW_STORAGE_KEY, next);
+    } catch {}
+  };
   const { language } = useLanguage();
 
   const getSearchableText = (
@@ -246,6 +267,37 @@ export function EmployeeGrid({
     }
   };
 
+  const ViewToggle = () => (
+    <div
+      role="group"
+      aria-label={t("view.label")}
+      className="flex shrink-0 rounded-md border border-gray-300 bg-white p-0.5"
+    >
+      {(
+        [
+          ["cards", LayoutGrid, t("view.cards")],
+          ["table", List, t("view.table")],
+        ] as const
+      ).map(([mode, Icon, label]) => (
+        <button
+          key={mode}
+          type="button"
+          onClick={() => changeView(mode)}
+          aria-pressed={view === mode}
+          aria-label={label}
+          title={label}
+          className={`flex h-8 w-9 items-center justify-center rounded transition-colors ${
+            view === mode
+              ? "bg-blue-600 text-white"
+              : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
+      ))}
+    </div>
+  );
+
   const FilterControls = () => (
     <div className="space-y-4">
       {userRole === "admin" && (
@@ -362,6 +414,8 @@ export function EmployeeGrid({
             </SheetContent>
           </Sheet>
 
+          <ViewToggle />
+
           {userRole === "admin" && (
             <Button
               onClick={() => setShowAddDialog(true)}
@@ -453,6 +507,8 @@ export function EmployeeGrid({
           </Button>
         </div>
 
+        <ViewToggle />
+
         {/* Add Employee Button - только для админа */}
         {userRole === "admin" && (
           <Button
@@ -465,7 +521,19 @@ export function EmployeeGrid({
         )}
       </div>
 
-      {/* Employee Grid — skeleton cards until the directory arrives */}
+      {view === "table" ? (
+        !loading && visibleUsers.length === 0 ? null : (
+          <EmployeeTable
+            users={visibleUsers}
+            loading={loading}
+            userRole={userRole}
+            currentUserId={currentUserId}
+            onUpdate={handleUpdateUser}
+            onDelete={handleDeleteUser}
+          />
+        )
+      ) : (
+      /* Employee Grid — skeleton cards until the directory arrives */
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 lg:gap-5">
         {loading
           ? Array.from({ length: SKELETON_COUNT }, (_, i) => (
@@ -482,6 +550,7 @@ export function EmployeeGrid({
               />
             ))}
       </div>
+      )}
 
       {/* Empty State */}
       {!loading && visibleUsers.length === 0 && (

@@ -38,6 +38,11 @@ const translations = {
     profile: {
       settings: "Настройки профиля",
     },
+    view: {
+      label: "Вид",
+      cards: "Карточки",
+      table: "Таблица",
+    },
     twoFactor: {
       title: "Двухфакторная аутентификация",
       enabledDescription: "Включена. При входе потребуется код из Google Authenticator.",
@@ -210,6 +215,11 @@ const translations = {
     },
     profile: {
       settings: "Profile Settings",
+    },
+    view: {
+      label: "View",
+      cards: "Cards",
+      table: "Table",
     },
     twoFactor: {
       title: "Two-factor authentication",

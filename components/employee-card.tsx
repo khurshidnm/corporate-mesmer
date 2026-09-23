@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditEmployeeDialog } from "./edit-employee-dialog";
+import { GroupBadges } from "./group-badges";
 import {
   Mail,
   Phone,
@@ -22,6 +23,7 @@ import {
   Edit,
   Trash2,
   Building,
+  Layers,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { useLanguage } from "@/hooks/use-language";
@@ -45,42 +47,14 @@ export function EmployeeCard({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { t } = useTranslation();
   const { language } = useLanguage();
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-
-    // Форматирование даты в зависимости от выбранного языка
-    if (language === "ru") {
-      return date.toLocaleDateString("ru-RU", {
-        day: "numeric",
-        month: "long",
-      });
-    } else {
-      return date.toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-      });
-    }
-  };
+  const { formatDate, formatDaysUntilBirthday, getBirthdayTextColor } =
+    useBirthdayLabels();
 
   // Только админ может редактировать и удалять пользователей
   const canEdit = userRole === "admin";
 
   const daysUntilBirthday = daysUntil(user.birthday) ?? 0;
   const isBirthdayToday = daysUntilBirthday === 0;
-
-  const formatDaysUntilBirthday = (days: number) => {
-    if (days === 0) return t("birthday.todayBirthday");
-    if (days === 1) return t("birthday.tomorrowBirthday");
-    return t("birthday.daysUntilBirthday", { days });
-  };
-
-  const getBirthdayTextColor = (days: number) => {
-    if (days === 0) return "text-pink-600 font-semibold";
-    if (days <= 7) return "text-orange-600 font-medium";
-    if (days <= 30) return "text-blue-600";
-    return "text-gray-500";
-  };
 
   // Get localized text based on current language
   const getName = () => user.name[language] || user.name.ru;
@@ -105,33 +79,12 @@ export function EmployeeCard({
         <CardContent className="flex h-full flex-col p-4 lg:p-5">
           <div className="flex h-7 items-center justify-end">
             {canEdit && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                    aria-label={t("actions.edit")}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    {t("actions.edit")}
-                  </DropdownMenuItem>
-                  {user._id !== currentUserId && (
-                    <DropdownMenuItem
-                      onClick={() => onDelete(user._id)}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      {t("actions.delete")}
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <EmployeeActionsMenu
+                onEdit={() => setShowEditDialog(true)}
+                onDelete={
+                  user._id !== currentUserId ? () => onDelete(user._id) : undefined
+                }
+              />
             )}
           </div>
 
@@ -180,6 +133,10 @@ export function EmployeeCard({
               <Building className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
               <span className="line-clamp-2 leading-5">{getObjectName()}</span>
             </div>
+            <div className="flex min-w-0 items-start gap-3 text-slate-600" title={t("form.groups")}>
+              <Layers className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+              <GroupBadges groups={user.groups} />
+            </div>
           </div>
 
           <div className="mt-auto flex items-start gap-3 border-t border-slate-100 pt-4">
@@ -213,6 +170,72 @@ export function EmployeeCard({
   );
 }
 
+// Birthday date and countdown text, shared by the card and table views
+export function useBirthdayLabels() {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString(
+      language === "ru" ? "ru-RU" : "en-US",
+      { day: "numeric", month: "long" }
+    );
+
+  const formatDaysUntilBirthday = (days: number) => {
+    if (days === 0) return t("birthday.todayBirthday");
+    if (days === 1) return t("birthday.tomorrowBirthday");
+    return t("birthday.daysUntilBirthday", { days });
+  };
+
+  const getBirthdayTextColor = (days: number) => {
+    if (days === 0) return "text-pink-600 font-semibold";
+    if (days <= 7) return "text-orange-600 font-medium";
+    if (days <= 30) return "text-blue-600";
+    return "text-gray-500";
+  };
+
+  return { formatDate, formatDaysUntilBirthday, getBirthdayTextColor };
+}
+
+// Admin's edit/delete menu, shared by the card and table views. Delete is
+// left out when onDelete is undefined (an admin can't delete themselves).
+export function EmployeeActionsMenu({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete?: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          aria-label={t("actions.edit")}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={onEdit}>
+          <Edit className="w-4 h-4 mr-2" />
+          {t("actions.edit")}
+        </DropdownMenuItem>
+        {onDelete && (
+          <DropdownMenuItem onClick={onDelete} className="text-red-600">
+            <Trash2 className="w-4 h-4 mr-2" />
+            {t("actions.delete")}
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 // Placeholder shown while the directory is loading; mirrors the card layout
 // so the grid doesn't reflow when the real cards arrive.
 export function EmployeeCardSkeleton() {
@@ -230,6 +253,7 @@ export function EmployeeCardSkeleton() {
           <Skeleton className="h-4 w-5/6" />
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-1/3" />
         </div>
         <div className="mt-4 border-t border-slate-100 pt-4">
           <Skeleton className="h-4 w-1/2" />
