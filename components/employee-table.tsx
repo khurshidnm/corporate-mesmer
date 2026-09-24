@@ -49,7 +49,6 @@ export function EmployeeTable({
           <TableRow className="whitespace-nowrap hover:bg-transparent">
             <TableHead className="pl-4">{t("form.name")}</TableHead>
             <TableHead>{t("form.objectName")}</TableHead>
-            <TableHead>{t("form.groups")}</TableHead>
             <TableHead>{t("form.email")}</TableHead>
             <TableHead>{t("form.phone")}</TableHead>
             <TableHead>{t("form.birthday")}</TableHead>
@@ -69,8 +68,7 @@ export function EmployeeTable({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-36" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-28" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-20" /></TableCell>
@@ -118,7 +116,6 @@ function EmployeeRow({
 
   const name = user.name[language] || user.name.ru;
   const position = user.position[language] || user.position.ru;
-  const objectName = user.object_name[language] || user.object_name.ru;
 
   return (
     <>
@@ -143,7 +140,6 @@ function EmployeeRow({
             </div>
           </div>
         </TableCell>
-        <TableCell className="text-slate-600">{objectName}</TableCell>
         <TableCell>
           <GroupBadges groups={user.groups} nowrap />
         </TableCell>

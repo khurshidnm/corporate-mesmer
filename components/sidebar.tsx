@@ -20,7 +20,9 @@ import type { User, MultiLanguageText } from "@/types";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { USER_GROUPS, GROUP_SECTION_PREFIX } from "@/lib/groups";
+import { GROUP_SECTION_PREFIX } from "@/lib/groups";
+import { useGroups } from "@/hooks/use-groups";
+import { ManageGroupsDialog } from "./manage-groups-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -44,10 +46,12 @@ export function Sidebar({
   onUserUpdate,
 }: SidebarProps) {
   const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [showManageGroups, setShowManageGroups] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const { data: session } = useSession();
   const { t } = useTranslation();
   const { language } = useLanguage();
+  const { groups, isSuperAdmin } = useGroups();
 
   // Функция для получения локализованного текста
   const getLocalizedText = (
@@ -193,8 +197,41 @@ export function Sidebar({
               </Tooltip>
             )}
 
-            {/* Employee groups, assigned by admins */}
-            {USER_GROUPS.map((group) => {
+            {/* Employee groups / Work Objects */}
+            {!collapsed && (
+              <div className="flex items-center justify-between px-3 pt-3 pb-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  {t("sidebar.groups") || "Объекты"}
+                </span>
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => setShowManageGroups(true)}
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-1 rounded hover:bg-slate-100"
+                    title={t("groups.manage") || "Управление группами"}
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {collapsed && isSuperAdmin && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setShowManageGroups(true)}
+                    className="flex w-full items-center justify-center rounded-md px-3 py-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {t("groups.manage") || "Управление группами"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {groups.map((group) => {
               const section = `${GROUP_SECTION_PREFIX}${group.id}`;
               return (
                 <Tooltip key={group.id}>
@@ -329,6 +366,14 @@ export function Sidebar({
           onOpenChange={setShowProfileSettings}
           user={currentUser}
           onUpdate={handleProfileUpdate}
+        />
+      )}
+
+      {/* Super Admin Groups Management Dialog */}
+      {isSuperAdmin && (
+        <ManageGroupsDialog
+          open={showManageGroups}
+          onOpenChange={setShowManageGroups}
         />
       )}
     </div>

@@ -23,7 +23,6 @@ import {
   Edit,
   Trash2,
   Building,
-  Layers,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { useLanguage } from "@/hooks/use-language";
@@ -59,7 +58,6 @@ export function EmployeeCard({
   // Get localized text based on current language
   const getName = () => user.name[language] || user.name.ru;
   const getPosition = () => user.position[language] || user.position.ru;
-  const getObjectName = () => user.object_name[language] || user.object_name.ru;
 
   return (
     <>
@@ -129,12 +127,8 @@ export function EmployeeCard({
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
               <span className="leading-5">{user.phone}</span>
             </div>
-            <div className="flex min-w-0 items-start gap-3 text-slate-600">
+            <div className="flex min-w-0 items-start gap-3 text-slate-600" title={t("form.objectName")}>
               <Building className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-              <span className="line-clamp-2 leading-5">{getObjectName()}</span>
-            </div>
-            <div className="flex min-w-0 items-start gap-3 text-slate-600" title={t("form.groups")}>
-              <Layers className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
               <GroupBadges groups={user.groups} />
             </div>
           </div>

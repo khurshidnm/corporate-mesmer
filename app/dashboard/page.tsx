@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import type { User, BirthdayUser } from "@/types";
 import Image from "next/image";
-import { USER_GROUPS, groupFromSection } from "@/lib/groups";
+import { groupFromSection } from "@/lib/groups";
+import { useGroups } from "@/hooks/use-groups";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -27,6 +28,7 @@ export default function DashboardPage() {
   const [showTeamBirthdayModal, setShowTeamBirthdayModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t } = useTranslation();
+  const { groups } = useGroups();
 
   // next-auth hands out a new session object on every refetch (e.g. when the
   // tab regains focus), so key the initial load on the stable user id instead.
@@ -186,7 +188,7 @@ export default function DashboardPage() {
   const getSectionTitle = () => {
     const group = groupFromSection(selectedSection);
     if (group) {
-      return USER_GROUPS.find((g) => g.id === group)!.label;
+      return groups.find((g) => g.id === group)?.label || group;
     }
     if (selectedSection === "top_managers") {
       return t("sidebar.topManagers");

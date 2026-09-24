@@ -20,7 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUpload } from "./image-upload";
-import { GroupCheckboxes } from "./group-checkboxes";
+import { GroupSelect } from "./group-select";
+import { useGroups } from "@/hooks/use-groups";
 import { AdminTwoFactorReset } from "./two-factor-settings";
 import { useTranslation } from "@/hooks/use-translation";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -62,6 +63,7 @@ export function EditEmployeeDialog({
     groups: user.groups || [],
   });
   const { t } = useTranslation();
+  const { groups } = useGroups();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,31 +137,6 @@ export function EditEmployeeDialog({
                     className="border-gray-300 focus:border-blue-500 text-sm"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="object_name-ru"
-                    className="text-sm font-medium"
-                  >
-                    {t("form.objectName")} (Русский)
-                  </Label>
-                  <Input
-                    id="object_name-ru"
-                    value={formData.object_name.ru}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        object_name: {
-                          ...formData.object_name,
-                          ru: e.target.value,
-                        },
-                      })
-                    }
-                    required
-                    placeholder="Главный офис"
-                    className="border-gray-300 focus:border-blue-500 text-sm"
-                  />
-                </div>
               </TabsContent>
 
               <TabsContent value="en" className="space-y-4">
@@ -197,31 +174,6 @@ export function EditEmployeeDialog({
                     }
                     required
                     placeholder="Manager"
-                    className="border-gray-300 focus:border-blue-500 text-sm"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="object_name-en"
-                    className="text-sm font-medium"
-                  >
-                    {t("form.objectName")} (English)
-                  </Label>
-                  <Input
-                    id="object_name-en"
-                    value={formData.object_name.en}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        object_name: {
-                          ...formData.object_name,
-                          en: e.target.value,
-                        },
-                      })
-                    }
-                    required
-                    placeholder="Main Office"
                     className="border-gray-300 focus:border-blue-500 text-sm"
                   />
                 </div>
@@ -399,9 +351,18 @@ export function EditEmployeeDialog({
               </div>
 
               {userRole === "admin" && (
-                <GroupCheckboxes
+                <GroupSelect
+                  label="Объект работы (Русский)"
                   value={formData.groups || []}
-                  onChange={(groups) => setFormData({ ...formData, groups })}
+                  onChange={(groupIds) => {
+                    const selected = groups.find((g) => g.id === groupIds[0]);
+                    const label = selected?.label || "";
+                    setFormData({
+                      ...formData,
+                      groups: groupIds,
+                      object_name: { ru: label, en: label },
+                    });
+                  }}
                 />
               )}
 

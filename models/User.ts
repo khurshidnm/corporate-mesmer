@@ -1,6 +1,6 @@
 import mongoose, { type Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
-import { USER_GROUP_IDS, type UserGroup } from "@/lib/groups";
+import { USER_GROUPS, USER_GROUP_IDS, type UserGroup } from "@/lib/groups";
 
 export interface IUser extends Document {
   name: {
@@ -115,12 +115,12 @@ const UserSchema = new Schema<IUser>(
     object_name: {
       ru: {
         type: String,
-        required: [true, "Russian object name is required"],
+        default: "",
         trim: true,
       },
       en: {
         type: String,
-        required: [true, "English object name is required"],
+        default: "",
         trim: true,
       },
     },
@@ -129,7 +129,11 @@ const UserSchema = new Schema<IUser>(
       default: false,
     },
     groups: {
-      type: [{ type: String, enum: USER_GROUP_IDS }],
+      type: [String],
+      validate: {
+        validator: (v: string[]) => !v || v.length <= 1,
+        message: "A user may only belong to one group",
+      },
       default: [],
     },
     // Google Authenticator (TOTP). Hidden from queries unless explicitly
@@ -164,8 +168,16 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// Hash password before saving - only if password is modified and not already hashed
 UserSchema.pre("save", async function () {
+  // Sync object_name from assigned group if groups has a selection and object_name is not custom
+  if (this.groups && this.groups.length > 0) {
+    const groupId = this.groups[0];
+    const defaultGroup = USER_GROUPS.find((g) => g.id === groupId);
+    if (defaultGroup && (!this.object_name?.ru || this.isModified("groups"))) {
+      this.object_name = { ru: defaultGroup.label, en: defaultGroup.label };
+    }
+  }
+
   // Skip if password is not modified or if it's already a hash
   if (!this.isModified("password") || this.password.match(/^\$2[aby]\$/)) {
     return;
