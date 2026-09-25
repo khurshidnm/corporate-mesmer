@@ -226,6 +226,7 @@ export default function DashboardPage() {
           userRole={userRole}
           currentUser={currentUser}
           onUserUpdate={handleUserUpdate}
+          users={users}
         />
       </div>
 
@@ -268,6 +269,7 @@ export default function DashboardPage() {
               userRole={userRole}
               currentUser={currentUser}
               onUserUpdate={handleUserUpdate}
+              users={users}
             />
           </div>
         </div>

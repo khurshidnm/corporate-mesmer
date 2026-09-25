@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Users,
   UserCheck,
@@ -37,6 +37,7 @@ interface SidebarProps {
   userRole: "admin" | "worker";
   currentUser?: User;
   onUserUpdate?: (user: User) => void;
+  users?: User[];
 }
 
 export function Sidebar({
@@ -45,6 +46,7 @@ export function Sidebar({
   userRole,
   currentUser,
   onUserUpdate,
+  users = [],
 }: SidebarProps) {
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [showManageGroups, setShowManageGroups] = useState(false);
@@ -53,6 +55,23 @@ export function Sidebar({
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { groups, isSuperAdmin } = useGroups();
+
+  // Compute user counts for each menu section and work object
+  const userCounts = useMemo(() => {
+    const topManagers = users.filter((u) => u.workerType === "top_manager").length;
+    const employees = users.filter(
+      (u) => u.workerType === "employee" || u.role === "admin"
+    ).length;
+    const groupCounts: Record<string, number> = {};
+    for (const g of groups) {
+      groupCounts[g.id] = users.filter((u) => u.groups?.includes(g.id)).length;
+    }
+    return {
+      topManagers,
+      employees,
+      groupCounts,
+    };
+  }, [users, groups]);
 
   // Функция для получения локализованного текста
   const getLocalizedText = (
@@ -138,7 +157,7 @@ export function Sidebar({
                   <button
                     onClick={() => onSectionChange("top_managers")}
                     className={cn(
-                      "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
+                      "group flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
                       selectedSection === "top_managers"
                         ? "bg-blue-600 text-white shadow-sm"
                         : "text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-400",
@@ -146,18 +165,30 @@ export function Sidebar({
                     )}
                   >
                     <UserCheck
-                      className={cn("w-5 h-5", collapsed ? "" : "mr-3")}
+                      className={cn("w-5 h-5 shrink-0", collapsed ? "" : "mr-3")}
                     />
                     {!collapsed && (
-                      <span className="font-medium text-sm">
-                        {t("sidebar.topManagers")}
-                      </span>
+                      <>
+                        <span className="font-medium text-sm flex-1 truncate">
+                          {t("sidebar.topManagers")}
+                        </span>
+                        <span
+                          className={cn(
+                            "ml-auto text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums transition-colors",
+                            selectedSection === "top_managers"
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-200"
+                          )}
+                        >
+                          {userCounts.topManagers}
+                        </span>
+                      </>
                     )}
                   </button>
                 </TooltipTrigger>
                 {collapsed && (
                   <TooltipContent side="right">
-                    {t("sidebar.topManagers")}
+                    {t("sidebar.topManagers")} ({userCounts.topManagers})
                   </TooltipContent>
                 )}
               </Tooltip>
@@ -169,24 +200,36 @@ export function Sidebar({
                   <button
                     onClick={() => onSectionChange("employees")}
                     className={cn(
-                      "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
+                      "group flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
                       selectedSection === "employees"
                         ? "bg-blue-600 text-white shadow-sm"
                         : "text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-400",
                       collapsed ? "justify-center" : ""
                     )}
                   >
-                    <Users className={cn("w-5 h-5", collapsed ? "" : "mr-3")} />
+                    <Users className={cn("w-5 h-5 shrink-0", collapsed ? "" : "mr-3")} />
                     {!collapsed && (
-                      <span className="font-medium text-sm">
-                        {t("sidebar.employees")}
-                      </span>
+                      <>
+                        <span className="font-medium text-sm flex-1 truncate">
+                          {t("sidebar.employees")}
+                        </span>
+                        <span
+                          className={cn(
+                            "ml-auto text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums transition-colors",
+                            selectedSection === "employees"
+                              ? "bg-white/20 text-white"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-200"
+                          )}
+                        >
+                          {userCounts.employees}
+                        </span>
+                      </>
                     )}
                   </button>
                 </TooltipTrigger>
                 {collapsed && (
                   <TooltipContent side="right">
-                    {t("sidebar.employees")}
+                    {t("sidebar.employees")} ({userCounts.employees})
                   </TooltipContent>
                 )}
               </Tooltip>
@@ -228,31 +271,47 @@ export function Sidebar({
 
             {groups.map((group) => {
               const section = `${GROUP_SECTION_PREFIX}${group.id}`;
+              const isSelected = selectedSection === section;
+              const groupCount = userCounts.groupCounts[group.id] || 0;
               return (
                 <Tooltip key={group.id}>
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => onSectionChange(section)}
                       className={cn(
-                        "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
-                        selectedSection === section
+                        "group flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
+                        isSelected
                           ? "bg-blue-600 text-white shadow-sm"
                           : "text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-400",
                         collapsed ? "justify-center" : ""
                       )}
                     >
                       <Layers
-                        className={cn("w-5 h-5", collapsed ? "" : "mr-3")}
+                        className={cn("w-5 h-5 shrink-0", collapsed ? "" : "mr-3")}
                       />
                       {!collapsed && (
-                        <span className="font-medium text-sm">
-                          {group.label}
-                        </span>
+                        <>
+                          <span className="font-medium text-sm flex-1 truncate">
+                            {group.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "ml-auto text-xs font-semibold px-2 py-0.5 rounded-full tabular-nums transition-colors",
+                              isSelected
+                                ? "bg-white/20 text-white"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-700 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-200"
+                            )}
+                          >
+                            {groupCount}
+                          </span>
+                        </>
                       )}
                     </button>
                   </TooltipTrigger>
                   {collapsed && (
-                    <TooltipContent side="right">{group.label}</TooltipContent>
+                    <TooltipContent side="right">
+                      {group.label} ({groupCount})
+                    </TooltipContent>
                   )}
                 </Tooltip>
               );
