@@ -19,13 +19,13 @@ const translations = {
       accountLocked: "Слишком много неудачных попыток входа. Попробуйте снова через 15 минут.",
     },
     dashboard: {
-      topManagers: "Топ менеджеры",
+      topManagers: "Менеджмент",
       employees: "Сотрудники",
       noAccess: "Нет доступа",
       noAccessDescription: "У вас нет прав для просмотра этого раздела",
     },
     sidebar: {
-      topManagers: "Топ менеджеры",
+      topManagers: "Менеджмент",
       employees: "Сотрудники",
       groups: "Объекты",
       logout: "Выйти",
@@ -217,13 +217,13 @@ const translations = {
       accountLocked: "Too many failed sign-in attempts. Try again in 15 minutes.",
     },
     dashboard: {
-      topManagers: "Top Managers",
+      topManagers: "Management",
       employees: "Employees",
       noAccess: "No Access",
       noAccessDescription: "You don't have permission to view this section",
     },
     sidebar: {
-      topManagers: "Top Managers",
+      topManagers: "Management",
       employees: "Employees",
       groups: "Work Objects",
       logout: "Logout",
@@ -301,11 +301,11 @@ const translations = {
     },
     workerTypes: {
       employee: "Employee",
-      top_manager: "Top Manager",
+      top_manager: "Management",
     },
     viewPermissions: {
       both: "All Employees",
-      topManagers: "Top Managers Only",
+      topManagers: "Management Only",
       employees: "Employees Only",
     },
     actions: {

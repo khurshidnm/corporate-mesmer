@@ -231,9 +231,8 @@ export default function DashboardPage() {
 
       {/* Mobile Sidebar Overlay */}
       <div
-        className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300 ${
-          sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300 ${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         onClick={() => setSidebarOpen(false)}
       >
         {/* Backdrop */}
@@ -241,9 +240,8 @@ export default function DashboardPage() {
 
         {/* Sidebar Container */}
         <div
-          className={`absolute top-0 left-0 w-64 h-full bg-white dark:bg-slate-900 shadow-xl transform transition-transform duration-300 ease-in-out ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`absolute top-0 left-0 w-64 h-full bg-white dark:bg-slate-900 shadow-xl transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
