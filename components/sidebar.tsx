@@ -18,6 +18,7 @@ import { useTranslation } from "@/hooks/use-translation";
 import { useLanguage } from "@/hooks/use-language";
 import type { User, MultiLanguageText } from "@/types";
 import Image from "next/image";
+import { MesmerLogo } from "@/components/mesmer-logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { GROUP_SECTION_PREFIX } from "@/lib/groups";
@@ -89,22 +90,16 @@ export function Sidebar({
   return (
     <div
       className={cn(
-        "flex h-full flex-col border-r border-slate-200 bg-white shadow-[8px_0_28px_rgba(15,23,42,0.04)] transition-all duration-300",
+        "flex h-full flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-[8px_0_28px_rgba(15,23,42,0.04)] transition-all duration-300",
         collapsed ? "w-[70px]" : "w-64"
       )}
     >
       {/* Logo Section */}
-      <div className="flex items-center justify-between border-b border-slate-100 p-4">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-4">
         {!collapsed && (
           <div className="flex items-center">
-            <div className=" rounded-md p-1 mr-2">
-              <Image
-                src="/mesmerlogo1.svg"
-                alt="Mesmer Logo"
-                width={200}
-                height={200}
-                className="object-contain"
-              />
+            <div className="rounded-md p-1 mr-2">
+              <MesmerLogo className="h-8 w-auto max-w-[170px]" />
             </div>
           </div>
         )}
@@ -121,7 +116,7 @@ export function Sidebar({
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 lg:flex"
+          className="hidden h-7 w-7 items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 lg:flex"
           aria-label="Toggle sidebar"
         >
           <ChevronRight
@@ -146,7 +141,7 @@ export function Sidebar({
                       "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
                       selectedSection === "top_managers"
                         ? "bg-blue-600 text-white shadow-sm"
-                        : "text-slate-600 hover:bg-blue-50 hover:text-blue-700",
+                        : "text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-400",
                       collapsed ? "justify-center" : ""
                     )}
                   >
@@ -177,7 +172,7 @@ export function Sidebar({
                       "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
                       selectedSection === "employees"
                         ? "bg-blue-600 text-white shadow-sm"
-                        : "text-slate-600 hover:bg-blue-50 hover:text-blue-700",
+                        : "text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-400",
                       collapsed ? "justify-center" : ""
                     )}
                   >
@@ -200,13 +195,13 @@ export function Sidebar({
             {/* Employee groups / Work Objects */}
             {!collapsed && (
               <div className="flex items-center justify-between px-3 pt-3 pb-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                   {t("sidebar.groups") || "Объекты"}
                 </span>
                 {isSuperAdmin && (
                   <button
                     onClick={() => setShowManageGroups(true)}
-                    className="text-slate-400 hover:text-blue-600 transition-colors p-1 rounded hover:bg-slate-100"
+                    className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
                     title={t("groups.manage") || "Управление группами"}
                   >
                     <Settings className="w-3.5 h-3.5" />
@@ -220,7 +215,7 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setShowManageGroups(true)}
-                    className="flex w-full items-center justify-center rounded-md px-3 py-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    className="flex w-full items-center justify-center rounded-md px-3 py-2 text-slate-400 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                   >
                     <Settings className="w-4 h-4" />
                   </button>
@@ -242,7 +237,7 @@ export function Sidebar({
                         "flex w-full items-center rounded-md px-3 py-2.5 text-left transition-colors",
                         selectedSection === section
                           ? "bg-blue-600 text-white shadow-sm"
-                          : "text-slate-600 hover:bg-blue-50 hover:text-blue-700",
+                          : "text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-400",
                         collapsed ? "justify-center" : ""
                       )}
                     >
@@ -268,13 +263,13 @@ export function Sidebar({
 
       {/* User Profile Section */}
       <div
-        className={cn("border-t border-gray-200", collapsed ? "p-2" : "p-4")}
+        className={cn("border-t border-gray-200 dark:border-slate-800", collapsed ? "p-2" : "p-4")}
       >
         {session && (
           <div className="mb-3">
             <div
               className={cn(
-                "flex items-center bg-gray-50 rounded-lg border p-2",
+                "flex items-center bg-gray-50 dark:bg-slate-800/60 rounded-lg border border-slate-200 dark:border-slate-700/70 p-2",
                 collapsed ? "justify-center" : "space-x-3"
               )}
             >
@@ -296,10 +291,10 @@ export function Sidebar({
 
               {!collapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-slate-100 truncate">
                     {getLocalizedText(session.user?.name)}
                   </p>
-                  <p className="text-xs text-blue-600 font-medium">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                     {t(`roles.${userRole}`)}
                   </p>
                 </div>
@@ -317,7 +312,7 @@ export function Sidebar({
                   variant="outline"
                   onClick={() => setShowProfileSettings(true)}
                   className={cn(
-                    "border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-blue-600 text-sm mb-2",
+                    "border-gray-300 dark:border-slate-700 dark:bg-slate-800/60 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 text-sm mb-2",
                     collapsed ? "w-full p-2 justify-center" : "w-full"
                   )}
                 >
@@ -342,7 +337,7 @@ export function Sidebar({
                 variant="outline"
                 onClick={() => signOut()}
                 className={cn(
-                  "border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-red-600 text-sm",
+                  "border-gray-300 dark:border-slate-700 dark:bg-slate-800/60 text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 text-sm",
                   collapsed ? "w-full p-2 justify-center" : "w-full"
                 )}
               >

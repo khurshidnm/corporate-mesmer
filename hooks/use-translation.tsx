@@ -194,6 +194,12 @@ const translations = {
       november: "Ноябрь",
       december: "Декабрь",
     },
+    theme: {
+      toggle: "Тема",
+      light: "Светлая",
+      dark: "Тёмная",
+      system: "Системная",
+    },
   },
   en: {
     auth: {
@@ -385,6 +391,12 @@ const translations = {
       october: "October",
       november: "November",
       december: "December",
+    },
+    theme: {
+      toggle: "Theme",
+      light: "Light",
+      dark: "Dark",
+      system: "System",
     },
   },
 };

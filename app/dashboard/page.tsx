@@ -8,11 +8,13 @@ import { EmployeeGrid } from "@/components/employee-grid";
 import { BirthdayNotificationBell } from "@/components/birthday-notification-bell";
 import { TeamBirthdayModal } from "@/components/team-birthday-modal";
 import { LanguageToggle } from "@/components/language-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useTranslation } from "@/hooks/use-translation";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import type { User, BirthdayUser } from "@/types";
 import Image from "next/image";
+import { MesmerLogo } from "@/components/mesmer-logo";
 import { groupFromSection } from "@/lib/groups";
 import { useGroups } from "@/hooks/use-groups";
 
@@ -215,7 +217,7 @@ export default function DashboardPage() {
   const userRole = currentUser.role as "admin" | "worker";
 
   return (
-    <div className="flex min-h-screen bg-[#f4f7fb]">
+    <div className="flex min-h-screen bg-[#f4f7fb] dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block h-screen sticky top-0 z-10">
         <Sidebar
@@ -235,24 +237,19 @@ export default function DashboardPage() {
         onClick={() => setSidebarOpen(false)}
       >
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 
         {/* Sidebar Container */}
         <div
-          className={`absolute top-0 left-0 w-64 h-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
+          className={`absolute top-0 left-0 w-64 h-full bg-white dark:bg-slate-900 shadow-xl transform transition-transform duration-300 ease-in-out ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="rounded-md flex items-center justify-center">
-                <Image
-                  src="/mesmerlogo1.svg"
-                  alt="Mesmer Logo"
-                  width={100}
-                  height={100}
-                />
+                <MesmerLogo className="h-7 w-auto max-w-[120px]" />
               </div>
             </div>
             <Button
@@ -281,7 +278,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="flex-1 min-w-0 min-h-screen flex flex-col">
         {/* Fixed Mobile Header */}
-        <div className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:hidden">
+        <div className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-4 lg:hidden">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -293,39 +290,36 @@ export default function DashboardPage() {
             </Button>
             <div className="flex items-center gap-2">
               <div className="rounded-md flex items-center justify-center">
-                <Image
-                  src="/mesmerlogo1.svg"
-                  alt="Mesmer Logo"
-                  width={100}
-                  height={100}
-                />
+                <MesmerLogo className="h-7 w-auto max-w-[120px]" />
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <BirthdayNotificationBell birthdays={upcomingBirthdays} />
+            <ThemeToggle />
             <LanguageToggle />
           </div>
         </div>
 
         {/* Fixed Desktop Header */}
-        <div className="fixed left-64 right-0 top-0 z-40 hidden h-20 border-b border-slate-200 bg-white px-8 lg:block">
+        <div className="fixed left-64 right-0 top-0 z-40 hidden h-20 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-8 lg:block">
           <div className="flex h-full items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 {getSectionTitle()}
               </h1>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <BirthdayNotificationBell birthdays={upcomingBirthdays} />
+              <ThemeToggle />
               <LanguageToggle />
             </div>
           </div>
         </div>
 
         {/* Fixed Mobile Section Title */}
-        <div className="fixed left-0 right-0 top-16 z-30 flex h-12 items-center border-b border-slate-200 bg-white px-4 lg:hidden">
-          <h1 className="text-xl font-semibold text-slate-900">
+        <div className="fixed left-0 right-0 top-16 z-30 flex h-12 items-center border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-4 lg:hidden">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
             {getSectionTitle()}
           </h1>
         </div>

@@ -43,10 +43,10 @@ export function EmployeeTable({
   const canEdit = userRole === "admin";
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
       <Table className="min-w-[960px]">
-        <TableHeader className="bg-slate-50">
-          <TableRow className="whitespace-nowrap hover:bg-transparent">
+        <TableHeader className="bg-slate-50 dark:bg-slate-800/80">
+          <TableRow className="whitespace-nowrap hover:bg-transparent border-b border-slate-200 dark:border-slate-800">
             <TableHead className="pl-4">{t("form.name")}</TableHead>
             <TableHead>{t("form.objectName")}</TableHead>
             <TableHead>{t("form.email")}</TableHead>
@@ -58,7 +58,7 @@ export function EmployeeTable({
         <TableBody>
           {loading
             ? Array.from({ length: SKELETON_ROWS }, (_, i) => (
-                <TableRow key={i}>
+                <TableRow key={i} className="border-b border-slate-100 dark:border-slate-800">
                   <TableCell className="pl-4">
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
@@ -119,7 +119,13 @@ function EmployeeRow({
 
   return (
     <>
-      <TableRow className={isBirthdayToday ? "bg-fuchsia-50/60 hover:bg-fuchsia-50" : undefined}>
+      <TableRow
+        className={
+          isBirthdayToday
+            ? "bg-fuchsia-50/60 hover:bg-fuchsia-50 dark:bg-fuchsia-950/30 dark:hover:bg-fuchsia-950/40 border-b border-slate-100 dark:border-slate-800"
+            : "hover:bg-slate-50/60 dark:hover:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800"
+        }
+      >
         <TableCell className="pl-4">
           <div className="flex min-w-0 items-center gap-3">
             <LazyAvatar
@@ -130,11 +136,11 @@ function EmployeeRow({
               }`}
             />
             <div className="min-w-0">
-              <p className="truncate font-medium text-slate-900" title={name}>
+              <p className="truncate font-medium text-slate-900 dark:text-slate-100" title={name}>
                 {name}
                 {isBirthdayToday && <span className="ml-1.5">🎂</span>}
               </p>
-              <p className="truncate text-xs font-medium uppercase tracking-wide text-blue-700">
+              <p className="truncate text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-400">
                 {position}
               </p>
             </div>
@@ -144,19 +150,19 @@ function EmployeeRow({
           <GroupBadges groups={user.groups} nowrap />
         </TableCell>
         <TableCell>
-          <a href={`mailto:${user.email}`} className="text-slate-600 hover:text-blue-700 hover:underline">
+          <a href={`mailto:${user.email}`} className="text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 hover:underline">
             {user.email}
           </a>
         </TableCell>
         <TableCell className="whitespace-nowrap">
-          <a href={`tel:${user.phone}`} className="text-slate-600 hover:text-blue-700 hover:underline">
+          <a href={`tel:${user.phone}`} className="text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 hover:underline">
             {user.phone}
           </a>
         </TableCell>
         <TableCell className="whitespace-nowrap">
           {user.birthday && (
             <>
-              <p className="font-medium text-slate-700">{formatDate(user.birthday)}</p>
+              <p className="font-medium text-slate-700 dark:text-slate-200">{formatDate(user.birthday)}</p>
               {days !== null && (
                 <p className={`text-xs ${getBirthdayTextColor(days)}`}>
                   {isBirthdayToday

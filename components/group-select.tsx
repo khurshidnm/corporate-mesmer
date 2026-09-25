@@ -45,7 +45,7 @@ export function GroupSelect({
       >
         <SelectTrigger
           id="employee-group"
-          className="border-gray-300 focus:border-blue-500 text-sm"
+          className="border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:border-blue-500 text-sm"
         >
           <SelectValue placeholder={t("form.selectGroup")} />
         </SelectTrigger>

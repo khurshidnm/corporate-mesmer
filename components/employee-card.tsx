@@ -62,10 +62,10 @@ export function EmployeeCard({
   return (
     <>
       <Card
-        className={`group relative h-full overflow-hidden border bg-white shadow-sm transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
+        className={`group relative h-full overflow-hidden border bg-white dark:bg-slate-900 shadow-sm transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
           isBirthdayToday
-            ? "border-fuchsia-200 shadow-fuchsia-100 hover:border-fuchsia-300"
-            : "border-slate-200 hover:border-blue-200"
+            ? "border-fuchsia-200 dark:border-fuchsia-900/60 shadow-fuchsia-100 dark:shadow-none hover:border-fuchsia-300 dark:hover:border-fuchsia-700"
+            : "border-slate-200 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-700/50"
         }`}
       >
         {isBirthdayToday && (
@@ -96,7 +96,7 @@ export function EmployeeCard({
                     className="h-[92px] w-[92px] rounded-full lg:h-[172px] lg:w-[172px]"
                   />
                 </FestiveRing>
-                <span className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white text-xl shadow-md ring-2 ring-fuchsia-100 animate-bounce motion-reduce:animate-none lg:h-11 lg:w-11 lg:text-2xl">
+                <span className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-white dark:bg-slate-800 text-xl shadow-md ring-2 ring-fuchsia-100 dark:ring-fuchsia-900/50 animate-bounce motion-reduce:animate-none lg:h-11 lg:w-11 lg:text-2xl">
                   🎂
                 </span>
               </div>
@@ -104,39 +104,39 @@ export function EmployeeCard({
               <LazyAvatar
                 src={user.avatar || "/placeholder.svg"}
                 alt={getName()}
-                className="h-[100px] w-[100px] rounded-full ring-4 ring-slate-50 lg:h-[180px] lg:w-[180px]"
+                className="h-[100px] w-[100px] rounded-full ring-4 ring-slate-50 dark:ring-slate-800 lg:h-[180px] lg:w-[180px]"
               />
             )}
           </div>
 
           <div className="mb-4 min-h-[58px] text-center lg:mb-5 lg:min-h-[64px]">
-            <h3 className="line-clamp-2 text-sm font-semibold text-slate-900 lg:text-base" title={getName()}>
+            <h3 className="line-clamp-2 text-sm font-semibold text-slate-900 dark:text-slate-100 lg:text-base" title={getName()}>
               {getName()}
             </h3>
-            <p className="mt-1 line-clamp-2 text-xs font-medium uppercase tracking-wide text-blue-700">
+            <p className="mt-1 line-clamp-2 text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-400">
               {getPosition()}
             </p>
           </div>
 
-          <div className="mb-4 space-y-3 border-t border-slate-100 pt-4 text-sm">
-            <div className="flex min-w-0 items-start gap-3 text-slate-600">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+          <div className="mb-4 space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4 text-sm">
+            <div className="flex min-w-0 items-start gap-3 text-slate-600 dark:text-slate-300">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
               <span className="break-all leading-5">{user.email}</span>
             </div>
-            <div className="flex min-w-0 items-start gap-3 text-slate-600">
-              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+            <div className="flex min-w-0 items-start gap-3 text-slate-600 dark:text-slate-300">
+              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
               <span className="leading-5">{user.phone}</span>
             </div>
-            <div className="flex min-w-0 items-start gap-3 text-slate-600" title={t("form.objectName")}>
-              <Building className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+            <div className="flex min-w-0 items-start gap-3 text-slate-600 dark:text-slate-300" title={t("form.objectName")}>
+              <Building className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
               <GroupBadges groups={user.groups} />
             </div>
           </div>
 
-          <div className="mt-auto flex items-start gap-3 border-t border-slate-100 pt-4">
-            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+          <div className="mt-auto flex items-start gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+            <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-700">{formatDate(user.birthday)}</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{formatDate(user.birthday)}</p>
               {isBirthdayToday ? (
                 <span className="mt-1 inline-block whitespace-nowrap rounded-full bg-gradient-to-r from-blue-600 to-fuchsia-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
                   {t("birthday.todayBirthdayShort")}
@@ -208,19 +208,19 @@ export function EmployeeActionsMenu({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          className="h-8 w-8 p-0 text-slate-400 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200"
           aria-label={t("actions.edit")}
         >
           <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onEdit}>
+      <DropdownMenuContent align="end" className="dark:bg-slate-900 dark:border-slate-800">
+        <DropdownMenuItem onClick={onEdit} className="dark:text-slate-200 dark:hover:bg-slate-800">
           <Edit className="w-4 h-4 mr-2" />
           {t("actions.edit")}
         </DropdownMenuItem>
         {onDelete && (
-          <DropdownMenuItem onClick={onDelete} className="text-red-600">
+          <DropdownMenuItem onClick={onDelete} className="text-red-600 dark:text-red-400 dark:hover:bg-slate-800">
             <Trash2 className="w-4 h-4 mr-2" />
             {t("actions.delete")}
           </DropdownMenuItem>
@@ -234,7 +234,7 @@ export function EmployeeActionsMenu({
 // so the grid doesn't reflow when the real cards arrive.
 export function EmployeeCardSkeleton() {
   return (
-    <Card className="h-full overflow-hidden border border-slate-200 bg-white shadow-sm">
+    <Card className="h-full overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
       <CardContent className="flex h-full flex-col p-4 lg:p-5">
         <div className="mb-4 flex h-[120px] items-center justify-center lg:mb-5 lg:h-[200px]">
           <Skeleton className="h-[100px] w-[100px] rounded-full lg:h-[180px] lg:w-[180px]" />
@@ -243,13 +243,13 @@ export function EmployeeCardSkeleton() {
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-3 w-1/2" />
         </div>
-        <div className="space-y-3 border-t border-slate-100 pt-4">
+        <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
           <Skeleton className="h-4 w-5/6" />
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="h-4 w-1/2" />
           <Skeleton className="h-4 w-1/3" />
         </div>
-        <div className="mt-4 border-t border-slate-100 pt-4">
+        <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-4">
           <Skeleton className="h-4 w-1/2" />
         </div>
       </CardContent>

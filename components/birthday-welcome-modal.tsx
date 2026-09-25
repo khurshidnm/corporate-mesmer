@@ -49,13 +49,13 @@ export function BirthdayWelcomeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto bg-white">
+      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
         {/* Header */}
         <DialogHeader className="relative">
-          <DialogTitle className="text-center text-2xl font-bold text-blue-600 break-words">
+          <DialogTitle className="text-center text-2xl font-bold text-blue-600 dark:text-blue-400 break-words">
             🎉 {t("birthday.welcomeTitle")} 🎉
           </DialogTitle>
-          <p className="text-center text-gray-600 mt-2 break-words">
+          <p className="text-center text-gray-600 dark:text-slate-300 mt-2 break-words">
             {t("birthday.welcomeSubtitle")}
           </p>
         </DialogHeader>
@@ -65,8 +65,8 @@ export function BirthdayWelcomeModal({
           {todayBirthdays.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Gift className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <h3 className="text-lg font-semibold text-blue-600 break-words">
+                <Gift className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 break-words">
                   {t("birthday.todayBirthdays")}
                 </h3>
               </div>
@@ -74,10 +74,10 @@ export function BirthdayWelcomeModal({
                 {todayBirthdays.map((user) => (
                   <div
                     key={user._id}
-                    className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-200"
+                    className="flex items-start space-x-3 p-4 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60"
                   >
                     <div className="relative flex-shrink-0">
-                      <Avatar className="w-12 h-12 ring-2 ring-blue-300">
+                      <Avatar className="w-12 h-12 ring-2 ring-blue-300 dark:ring-blue-700">
                         <AvatarImage
                           src={user.avatar || "/placeholder.svg"}
                           alt={getLocalizedText(user.name, language)}
@@ -95,10 +95,10 @@ export function BirthdayWelcomeModal({
                       </div>
                     </div>
                     <div className="flex-1 min-w-0 space-y-2">
-                      <p className="font-semibold text-gray-900 leading-tight break-words">
+                      <p className="font-semibold text-gray-900 dark:text-slate-100 leading-tight break-words">
                         {getLocalizedText(user.name, language)}
                       </p>
-                      <p className="text-sm text-gray-600 leading-tight break-words">
+                      <p className="text-sm text-gray-600 dark:text-slate-400 leading-tight break-words">
                         {getLocalizedText(user.position, language)}
                       </p>
                     </div>
@@ -117,8 +117,8 @@ export function BirthdayWelcomeModal({
           {upcomingBirthdays.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <h3 className="text-lg font-semibold text-blue-600 break-words">
+                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 break-words">
                   {t("birthday.upcomingThisWeek")}
                 </h3>
               </div>
@@ -126,10 +126,10 @@ export function BirthdayWelcomeModal({
                 {upcomingBirthdays.map((user) => (
                   <div
                     key={user._id}
-                    className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    className="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-slate-800/60 rounded-lg border border-gray-200 dark:border-slate-700"
                   >
                     <div className="flex-shrink-0">
-                      <Avatar className="w-12 h-12 ring-2 ring-gray-300">
+                      <Avatar className="w-12 h-12 ring-2 ring-gray-300 dark:ring-slate-600">
                         <AvatarImage
                           src={user.avatar || "/placeholder.svg"}
                           alt={getLocalizedText(user.name, language)}
@@ -144,15 +144,15 @@ export function BirthdayWelcomeModal({
                       </Avatar>
                     </div>
                     <div className="flex-1 min-w-0 space-y-2">
-                      <p className="font-semibold text-gray-900 leading-tight break-words">
+                      <p className="font-semibold text-gray-900 dark:text-slate-100 leading-tight break-words">
                         {getLocalizedText(user.name, language)}
                       </p>
-                      <p className="text-sm text-gray-600 leading-tight break-words">
+                      <p className="text-sm text-gray-600 dark:text-slate-400 leading-tight break-words">
                         {getLocalizedText(user.position, language)}
                       </p>
                     </div>
                     <div className="flex-shrink-0">
-                      <Badge className="bg-gray-600 text-white whitespace-nowrap">
+                      <Badge className="bg-gray-600 dark:bg-slate-700 text-white whitespace-nowrap">
                         {formatDaysUntilBirthday(user.daysUntilBirthday)}
                       </Badge>
                     </div>
@@ -163,8 +163,8 @@ export function BirthdayWelcomeModal({
           )}
 
           {/* Message */}
-          <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-gray-700 font-medium break-words leading-relaxed">
+          <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/40 rounded-lg border border-blue-200 dark:border-blue-900/60">
+            <p className="text-gray-700 dark:text-slate-200 font-medium break-words leading-relaxed">
               {t("birthday.dontForgetMessage")}
             </p>
           </div>

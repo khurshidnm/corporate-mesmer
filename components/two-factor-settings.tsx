@@ -79,19 +79,19 @@ export function TwoFactorSettings() {
   if (enabled === null) return null;
 
   return (
-    <div className="space-y-4 rounded-lg border border-slate-200 p-4">
+    <div className="space-y-4 rounded-lg border border-slate-200 dark:border-slate-800 p-4">
       <div className="flex items-start gap-3">
         <ShieldCheck
           className={`mt-0.5 h-5 w-5 shrink-0 ${enabled ? "text-green-600" : "text-slate-400"}`}
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-900">
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
             {t("twoFactor.title")}{" "}
             <span className={enabled ? "text-green-600" : "text-slate-400"}>
               · {enabled ? t("twoFactor.enabledStatus") : t("twoFactor.disabledStatus")}
             </span>
           </p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {enabled ? t("twoFactor.enabledDescription") : t("twoFactor.disabledDescription")}
           </p>
         </div>
@@ -112,15 +112,15 @@ export function TwoFactorSettings() {
         <form onSubmit={submitCode} className="space-y-3">
           {step === "setup" ? (
             <>
-              <p className="text-sm text-slate-600">{t("twoFactor.scanQr")}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300">{t("twoFactor.scanQr")}</p>
               <img src={qrCode} alt="" className="mx-auto h-[220px] w-[220px]" />
-              <p className="text-xs text-slate-500">{t("twoFactor.manualKey")}</p>
-              <code className="block break-all rounded bg-slate-100 px-2 py-1 text-center text-xs tracking-wider">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t("twoFactor.manualKey")}</p>
+              <code className="block break-all rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-2 py-1 text-center text-xs tracking-wider">
                 {secret}
               </code>
             </>
           ) : (
-            <p className="text-sm text-slate-600">{t("twoFactor.disablePrompt")}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">{t("twoFactor.disablePrompt")}</p>
           )}
           <Input
             inputMode="numeric"
@@ -194,16 +194,16 @@ export function AdminTwoFactorReset({ userId }: { userId: string }) {
   if (!enabled) return null;
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
-      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-      <p className="min-w-0 flex-1 text-xs text-slate-600">{t("twoFactor.resetDescription")}</p>
+    <div className="flex items-start gap-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 p-3">
+      <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+      <p className="min-w-0 flex-1 text-xs text-slate-600 dark:text-slate-300">{t("twoFactor.resetDescription")}</p>
       <Button
         type="button"
         size="sm"
         variant="outline"
         onClick={reset}
         disabled={busy}
-        className="shrink-0"
+        className="shrink-0 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
       >
         {t("twoFactor.reset")}
       </Button>

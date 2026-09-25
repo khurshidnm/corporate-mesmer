@@ -271,7 +271,7 @@ export function EmployeeGrid({
     <div
       role="group"
       aria-label={t("view.label")}
-      className="flex shrink-0 rounded-md border border-gray-300 bg-white p-0.5"
+      className="flex shrink-0 rounded-md border border-gray-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-0.5"
     >
       {(
         [
@@ -289,7 +289,7 @@ export function EmployeeGrid({
           className={`flex h-8 w-9 items-center justify-center rounded transition-colors ${
             view === mode
               ? "bg-blue-600 text-white"
-              : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
           }`}
         >
           <Icon className="h-4 w-4" />
@@ -301,8 +301,8 @@ export function EmployeeGrid({
   const FilterControls = () => (
     <div className="space-y-4">
       {userRole === "admin" && (
-        <div className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5">
-          <Label htmlFor="showHiddenUsers" className="text-sm font-medium text-slate-700">
+        <div className="flex items-center justify-between rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-3 py-2.5">
+          <Label htmlFor="showHiddenUsers" className="text-sm font-medium text-slate-700 dark:text-slate-200">
             {t("filters.showHiddenUsers")}
           </Label>
           <Switch
@@ -320,7 +320,7 @@ export function EmployeeGrid({
           disabled={birthdayFilterActive}
         >
           <SelectTrigger
-            className={`flex-1 border-gray-300 ${
+            className={`flex-1 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 ${
               birthdayFilterActive ? "opacity-50" : ""
             }`}
           >
@@ -358,7 +358,7 @@ export function EmployeeGrid({
           variant="outline"
           size="icon"
           onClick={toggleSortOrder}
-          className="border-gray-300 shrink-0"
+          className="border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 shrink-0"
           disabled={birthdayFilterActive}
         >
           <ArrowUpDown className="w-4 h-4" />
@@ -371,7 +371,7 @@ export function EmployeeGrid({
         className={`w-full ${
           birthdayFilterActive
             ? "bg-blue-600 hover:bg-blue-700 text-white"
-            : "border-gray-300 hover:bg-gray-50 text-gray-700"
+            : "border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 dark:bg-slate-900"
         }`}
       >
         <Cake className="w-4 h-4 mr-2" />
@@ -383,15 +383,15 @@ export function EmployeeGrid({
   return (
     <div>
       {/* Mobile Controls - Fixed */}
-      <div className="sticky top-28 z-30 mb-6 flex flex-col gap-4 border-b border-slate-200 bg-[#f4f7fb] py-4 lg:hidden">
+      <div className="sticky top-28 z-30 mb-6 flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 bg-[#f4f7fb] dark:bg-slate-950 py-4 lg:hidden">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-slate-500 w-4 h-4" />
           <Input
             placeholder={t("search.placeholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+            className="pl-10 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
@@ -399,7 +399,7 @@ export function EmployeeGrid({
         <div className="flex gap-2">
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <SheetTrigger asChild>
-              <Button variant="outline" className="flex-1 border-gray-300">
+              <Button variant="outline" className="flex-1 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                 <Filter className="w-4 h-4 mr-2" />
                 {t("filters.title")}
               </Button>
@@ -428,15 +428,15 @@ export function EmployeeGrid({
       </div>
 
       {/* Desktop Controls - Fixed */}
-      <div className="sticky top-20 z-30 mb-8 hidden gap-4 border-b border-slate-200 bg-[#f4f7fb] py-4 lg:flex lg:flex-row">
+      <div className="sticky top-20 z-30 mb-8 hidden gap-4 border-b border-slate-200 dark:border-slate-800 bg-[#f4f7fb] dark:bg-slate-950 py-4 lg:flex lg:flex-row">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-slate-500 w-4 h-4" />
           <Input
             placeholder={t("search.placeholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+            className="pl-10 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
 
@@ -448,7 +448,7 @@ export function EmployeeGrid({
             disabled={birthdayFilterActive}
           >
             <SelectTrigger
-              className={`w-48 border-gray-300 ${
+              className={`w-48 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 ${
                 birthdayFilterActive ? "opacity-50" : ""
               }`}
             >
@@ -486,7 +486,7 @@ export function EmployeeGrid({
             variant="outline"
             size="icon"
             onClick={toggleSortOrder}
-            className="border-gray-300"
+            className="border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
             disabled={birthdayFilterActive}
           >
             <ArrowUpDown className="w-4 h-4" />
@@ -499,7 +499,7 @@ export function EmployeeGrid({
             className={
               birthdayFilterActive
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "border-gray-300 hover:bg-gray-50 text-gray-700"
+                : "border-gray-300 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-200 dark:bg-slate-900"
             }
           >
             <Cake className="w-4 h-4 mr-2" />

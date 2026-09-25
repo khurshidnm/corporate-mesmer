@@ -24,7 +24,7 @@ export function GroupBadges({
       {assigned.map((g) => (
         <span
           key={g.id}
-          className="whitespace-nowrap rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-100"
+          className="whitespace-nowrap rounded-full bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-inset ring-blue-100 dark:ring-blue-900/60"
         >
           {g.label}
         </span>

@@ -71,7 +71,7 @@ export function TeamBirthdayModal({
         <DialogContent
           className={`${
             showList ? "sm:max-w-lg" : "sm:max-w-md"
-          } overflow-hidden border-0 bg-white p-0 shadow-2xl [&>button]:text-white [&>button]:opacity-80`}
+          } overflow-hidden border-0 bg-white dark:bg-slate-900 p-0 shadow-2xl [&>button]:text-white [&>button]:opacity-80`}
         >
           {/* Header */}
           <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-fuchsia-600 px-6 pb-8 pt-8 text-center text-white">
@@ -114,10 +114,10 @@ export function TeamBirthdayModal({
                       />
                     </FestiveRing>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold leading-tight text-gray-900 break-words">
+                      <h3 className="font-semibold leading-tight text-gray-900 dark:text-slate-100 break-words">
                         {getLocalizedText(user.name, language)}
                       </h3>
-                      <p className="text-sm leading-tight text-gray-500 break-words">
+                      <p className="text-sm leading-tight text-gray-500 dark:text-slate-400 break-words">
                         {getLocalizedText(user.position, language)}
                       </p>
                     </div>
@@ -138,22 +138,22 @@ export function TeamBirthdayModal({
                       className="h-28 w-28 rounded-full"
                     />
                   </FestiveRing>
-                  <span className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl shadow-md ring-2 ring-pink-100 animate-bounce motion-reduce:animate-none">
+                  <span className="absolute -bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-slate-800 text-xl shadow-md ring-2 ring-pink-100 dark:ring-pink-900/60 animate-bounce motion-reduce:animate-none">
                     🎉
                   </span>
                 </div>
-                <h3 className="mt-4 text-lg font-semibold leading-tight text-gray-900 break-words">
+                <h3 className="mt-4 text-lg font-semibold leading-tight text-gray-900 dark:text-slate-100 break-words">
                   {getLocalizedText(heroUser.name, language)}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 break-words">
+                <p className="mt-1 text-sm text-gray-500 dark:text-slate-400 break-words">
                   {getLocalizedText(heroUser.position, language)}
                 </p>
               </div>
             )}
 
             {/* Congratulatory message */}
-            <div className="mb-4 rounded-lg border border-blue-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-fuchsia-50 p-3">
-              <p className="text-center text-sm leading-relaxed text-gray-700 break-words">
+            <div className="mb-4 rounded-lg border border-blue-100 dark:border-blue-900/60 bg-gradient-to-r from-blue-50 via-indigo-50 to-fuchsia-50 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-fuchsia-950/40 p-3">
+              <p className="text-center text-sm leading-relaxed text-gray-700 dark:text-slate-200 break-words">
                 {showList ? (
                   ru ? (
                     <>Поздравляем наших коллег с днём рождения! 🎉</>

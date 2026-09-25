@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/hooks/use-translation";
 import { LanguageToggle } from "@/components/language-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { MesmerLogo } from "@/components/mesmer-logo";
 import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import { TWO_FACTOR_REQUIRED, TWO_FACTOR_INVALID, ACCOUNT_LOCKED } from "@/lib/auth-errors";
@@ -68,28 +70,23 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#eef4ff] px-4 py-10">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-blue-700" />
-      <div className="absolute top-4 right-4">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#eef4ff] dark:bg-slate-950 px-4 py-10 transition-colors">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-blue-700 dark:bg-blue-900/60" />
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <ThemeToggle />
         <LanguageToggle />
       </div>
-      <Card className="relative w-full max-w-md border-slate-200 bg-white shadow-xl shadow-blue-950/10">
+      <Card className="relative w-full max-w-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl shadow-blue-950/10 dark:shadow-black/50">
         <CardHeader className="space-y-4 pb-4 text-center">
-          <Image
-            src={"/mesmerlogo1.svg"}
-            alt=""
-            width={200}
-            height={200}
-            className="mx-auto h-16 w-auto"
-          />
-          <CardDescription className="text-slate-500">{t("auth.signInToAccount")}</CardDescription>
+          <MesmerLogo className="mx-auto h-12 w-auto" />
+          <CardDescription className="text-slate-500 dark:text-slate-400">{t("auth.signInToAccount")}</CardDescription>
         </CardHeader>
         <CardContent className="pb-7">
           {needsCode ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="flex flex-col items-center gap-3 text-center">
-                <ShieldCheck className="h-10 w-10 text-blue-700" />
-                <p className="text-sm text-slate-600">{t("auth.twoFactorPrompt")}</p>
+                <ShieldCheck className="h-10 w-10 text-blue-700 dark:text-blue-500" />
+                <p className="text-sm text-slate-600 dark:text-slate-300">{t("auth.twoFactorPrompt")}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="code">{t("auth.twoFactorCode")}</Label>

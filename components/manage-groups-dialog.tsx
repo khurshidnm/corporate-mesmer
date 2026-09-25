@@ -144,7 +144,7 @@ export function ManageGroupsDialog({
             {t("groups.currentGroups") || "Текущие группы"} ({groups.length})
           </Label>
 
-          <div className="divide-y divide-slate-100 rounded-md border border-slate-200 bg-white">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             {groups.length === 0 ? (
               <div className="p-4 text-center text-sm text-slate-400">
                 {t("groups.noGroups") || "Группы не созданы"}
@@ -180,7 +180,7 @@ export function ManageGroupsDialog({
                           variant="ghost"
                           disabled={submittingEdit || !editLabel.trim()}
                           onClick={() => handleUpdate(group.id)}
-                          className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                          className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                         >
                           {submittingEdit ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -192,14 +192,14 @@ export function ManageGroupsDialog({
                           size="sm"
                           variant="ghost"
                           onClick={() => setEditingId(null)}
-                          className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+                          className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                         >
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
                     ) : isConfirmingDelete ? (
-                      <div className="flex-1 flex items-center justify-between gap-2 bg-red-50 p-2 rounded-md">
-                        <span className="text-xs text-red-700 font-medium">
+                      <div className="flex-1 flex items-center justify-between gap-2 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/40 p-2 rounded-md">
+                        <span className="text-xs text-red-700 dark:text-red-300 font-medium">
                           {t("groups.confirmDelete") || "Удалить группу? (Сотрудники будут отвязаны)"}
                         </span>
                         <div className="flex items-center gap-1">
@@ -229,10 +229,10 @@ export function ManageGroupsDialog({
                     ) : (
                       <>
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-medium text-sm text-slate-800 truncate">
+                          <span className="font-medium text-sm text-slate-800 dark:text-slate-200 truncate">
                             {group.label}
                           </span>
-                          <span className="text-xs text-slate-400 font-mono bg-slate-50 px-1.5 py-0.5 rounded">
+                          <span className="text-xs text-slate-400 dark:text-slate-500 font-mono bg-slate-50 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                             {group.id}
                           </span>
                         </div>
@@ -241,7 +241,7 @@ export function ManageGroupsDialog({
                             size="sm"
                             variant="ghost"
                             onClick={() => startEdit(group.id, group.label)}
-                            className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                            className="h-8 w-8 p-0 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800"
                             title={t("actions.edit") || "Редактировать"}
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -250,7 +250,7 @@ export function ManageGroupsDialog({
                             size="sm"
                             variant="ghost"
                             onClick={() => setDeletingId(group.id)}
-                            className="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800"
                             title={t("actions.delete") || "Удалить"}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
