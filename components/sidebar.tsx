@@ -56,15 +56,16 @@ export function Sidebar({
   const { language } = useLanguage();
   const { groups, isSuperAdmin } = useGroups();
 
-  // Compute user counts for each menu section and work object
+  // Compute user counts for each menu section and work object (excluding hidden users)
   const userCounts = useMemo(() => {
-    const topManagers = users.filter((u) => u.workerType === "top_manager").length;
-    const employees = users.filter(
+    const visibleUsers = users.filter((u) => !u.hidden);
+    const topManagers = visibleUsers.filter((u) => u.workerType === "top_manager").length;
+    const employees = visibleUsers.filter(
       (u) => u.workerType === "employee" || u.role === "admin"
     ).length;
     const groupCounts: Record<string, number> = {};
     for (const g of groups) {
-      groupCounts[g.id] = users.filter((u) => u.groups?.includes(g.id)).length;
+      groupCounts[g.id] = visibleUsers.filter((u) => u.groups?.includes(g.id)).length;
     }
     return {
       topManagers,
