@@ -23,7 +23,9 @@ import {
   Filter,
   LayoutGrid,
   List,
+  Layers,
 } from "lucide-react";
+import { useGroups } from "@/hooks/use-groups";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -74,8 +76,10 @@ export function EmployeeGrid({
   const [birthdayFilterActive, setBirthdayFilterActive] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showHiddenUsers, setShowHiddenUsers] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string>("all");
   const [view, setView] = useState<ViewMode>("cards");
   const { t } = useTranslation();
+  const { groups } = useGroups();
 
   // Remembered per browser, like the language choice
   useEffect(() => {
@@ -125,17 +129,27 @@ export function EmployeeGrid({
       });
     }
 
+    // Filter by selected group
+    if (selectedGroup !== "all") {
+      result = result.filter((user) => user.groups?.includes(selectedGroup));
+    }
+
     const searchLower = searchTerm.trim().toLowerCase();
     result = result.filter((user) => {
       if (user.hidden && !showHiddenUsers) return false;
       if (!searchLower) return true;
+      const groupMatch = user.groups?.some((gId) => {
+        const gLabel = groups.find((g) => g.id === gId)?.label;
+        return gLabel && gLabel.toLowerCase().includes(searchLower);
+      });
       return (
         getSearchableText(user?.name).toLowerCase().includes(searchLower) ||
         getSearchableText(user?.position).toLowerCase().includes(searchLower) ||
         getSearchableText(user?.object_name)
           .toLowerCase()
           .includes(searchLower) ||
-        user?.email?.toLowerCase().includes(searchLower)
+        user?.email?.toLowerCase().includes(searchLower) ||
+        groupMatch
       );
     });
 
@@ -154,13 +168,32 @@ export function EmployeeGrid({
           getLocalizedText(pick(b), language)
         );
 
+    const getGroupLabel = (u: User) => {
+      const gId = u.groups?.[0];
+      if (!gId) return "";
+      const match = groups.find((g) => g.id === gId);
+      return match?.label || gId;
+    };
+
     const compare: (a: User, b: User) => number =
       sortBy === "name"
         ? byText((u) => u.name)
         : sortBy === "position"
         ? byText((u) => u.position)
-        : sortBy === "object_name"
-        ? byText((u) => u.object_name)
+        : sortBy === "group" || sortBy === "object_name"
+        ? (a: User, b: User) => {
+            const gA = getGroupLabel(a);
+            const gB = getGroupLabel(b);
+            if (!gA && gB) return 1;
+            if (gA && !gB) return -1;
+            return (
+              collator.compare(gA, gB) ||
+              collator.compare(
+                getLocalizedText(a.name, language),
+                getLocalizedText(b.name, language)
+              )
+            );
+          }
         : sortBy === "birthday"
         ? (a, b) =>
             (daysUntilBirthday(a.birthday) ?? 0) -
@@ -171,7 +204,18 @@ export function EmployeeGrid({
 
     const direction = sortOrder === "desc" ? -1 : 1;
     return [...result].sort((a, b) => direction * compare(a, b));
-  }, [users, userRole, currentUser, searchTerm, showHiddenUsers, sortBy, sortOrder, language]);
+  }, [
+    users,
+    userRole,
+    currentUser,
+    selectedGroup,
+    groups,
+    searchTerm,
+    showHiddenUsers,
+    sortBy,
+    sortOrder,
+    language,
+  ]);
 
   const handleAddUser = async (newUser: CreateUserData) => {
     try {
@@ -313,6 +357,32 @@ export function EmployeeGrid({
         </div>
       )}
 
+      <div>
+        <Label className="text-sm font-medium mb-1.5 block">
+          {t("filters.filterByGroup")}
+        </Label>
+        <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+          <SelectTrigger className="w-full border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            <div className="flex items-center gap-2 truncate">
+              <Layers className="w-4 h-4 shrink-0 text-slate-500" />
+              <span className="truncate">
+                {selectedGroup === "all"
+                  ? t("filters.allGroups")
+                  : groups.find((g) => g.id === selectedGroup)?.label || selectedGroup}
+              </span>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("filters.allGroups")}</SelectItem>
+            {groups.map((g) => (
+              <SelectItem key={g.id} value={g.id}>
+                {g.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="flex gap-2">
         <Select
           value={sortBy}
@@ -333,10 +403,10 @@ export function EmployeeGrid({
                 {t("sorting.byOrder")}
               </div>
             </SelectItem>
-            <SelectItem value="object_name">
+            <SelectItem value="group">
               <div className="flex items-center gap-2">
-                <Building className="w-4 h-4" />
-                {t("sorting.byObject")}
+                <Layers className="w-4 h-4" />
+                {t("sorting.byGroup")}
               </div>
             </SelectItem>
             <SelectItem value="name">
@@ -440,10 +510,32 @@ export function EmployeeGrid({
           />
         </div>
 
+        {/* Group Filter */}
+        <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+          <SelectTrigger className="w-44 border-gray-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+            <div className="flex items-center gap-2 truncate">
+              <Layers className="w-4 h-4 shrink-0 text-slate-500" />
+              <span className="truncate">
+                {selectedGroup === "all"
+                  ? t("filters.allGroups")
+                  : groups.find((g) => g.id === selectedGroup)?.label || selectedGroup}
+              </span>
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("filters.allGroups")}</SelectItem>
+            {groups.map((g) => (
+              <SelectItem key={g.id} value={g.id}>
+                {g.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         {/* Sort Controls */}
         <div className="flex gap-2">
           <Select
-            value={sortBy}
+            value={sortBy === "object_name" ? "group" : sortBy}
             onValueChange={handleSortChange}
             disabled={birthdayFilterActive}
           >
@@ -461,10 +553,10 @@ export function EmployeeGrid({
                   {t("sorting.byOrder")}
                 </div>
               </SelectItem>
-              <SelectItem value="object_name">
+              <SelectItem value="group">
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4" />
-                  {t("sorting.byObject")}
+                  <Layers className="w-4 h-4" />
+                  {t("sorting.byGroup")}
                 </div>
               </SelectItem>
               <SelectItem value="name">
@@ -530,6 +622,17 @@ export function EmployeeGrid({
             currentUserId={currentUserId}
             onUpdate={handleUpdateUser}
             onDelete={handleDeleteUser}
+            sortBy={sortBy}
+            sortOrder={sortOrder as "asc" | "desc"}
+            onSort={(column) => {
+              if (birthdayFilterActive) setBirthdayFilterActive(false);
+              if (sortBy === column || (column === "group" && sortBy === "object_name")) {
+                toggleSortOrder();
+              } else {
+                setSortBy(column);
+                setSortOrder("asc");
+              }
+            }}
           />
         )
       ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { LazyAvatar } from "./lazy-avatar";
 import { EditEmployeeDialog } from "./edit-employee-dialog";
 import { EmployeeActionsMenu, useBirthdayLabels } from "./employee-card";
@@ -26,6 +27,9 @@ interface EmployeeTableProps {
   currentUserId?: string;
   onUpdate: (user: User) => void;
   onDelete: (userId: string) => void;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  onSort?: (column: string) => void;
 }
 
 const SKELETON_ROWS = 8;
@@ -38,20 +42,59 @@ export function EmployeeTable({
   currentUserId,
   onUpdate,
   onDelete,
+  sortBy,
+  sortOrder = "asc",
+  onSort,
 }: EmployeeTableProps) {
   const { t } = useTranslation();
   const canEdit = userRole === "admin";
+
+  const renderSortIcon = (column: string) => {
+    const isCurrent = sortBy === column || (column === "group" && sortBy === "object_name");
+    if (!isCurrent) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 opacity-40 group-hover:opacity-100 transition-opacity" />;
+    }
+    return sortOrder === "asc" ? (
+      <ArrowUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+    ) : (
+      <ArrowDown className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+    );
+  };
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
       <Table className="min-w-[960px]">
         <TableHeader className="bg-slate-50 dark:bg-slate-800/80">
           <TableRow className="whitespace-nowrap hover:bg-transparent border-b border-slate-200 dark:border-slate-800">
-            <TableHead className="pl-4">{t("form.name")}</TableHead>
-            <TableHead>{t("form.objectName")}</TableHead>
+            <TableHead
+              className="pl-4 group cursor-pointer select-none hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              onClick={() => onSort?.("name")}
+            >
+              <div className="flex items-center gap-1.5">
+                <span>{t("form.name")}</span>
+                {renderSortIcon("name")}
+              </div>
+            </TableHead>
+            <TableHead
+              className="group cursor-pointer select-none hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              onClick={() => onSort?.("group")}
+            >
+              <div className="flex items-center gap-1.5">
+                <span>{t("form.objectName")}</span>
+                {renderSortIcon("group")}
+              </div>
+            </TableHead>
             <TableHead>{t("form.email")}</TableHead>
             <TableHead>{t("form.phone")}</TableHead>
-            <TableHead>{t("form.birthday")}</TableHead>
+            <TableHead
+              className="group cursor-pointer select-none hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              onClick={() => onSort?.("birthday")}
+            >
+              <div className="flex items-center gap-1.5">
+                <span>{t("form.birthday")}</span>
+                {renderSortIcon("birthday")}
+              </div>
+            </TableHead>
             {canEdit && <TableHead className="w-12" />}
           </TableRow>
         </TableHeader>

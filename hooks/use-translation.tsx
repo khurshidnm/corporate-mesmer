@@ -124,6 +124,7 @@ const translations = {
     sorting: {
       byOrder: "По порядку",
       byObject: "По объекту",
+      byGroup: "По группе (объекту)",
       byName: "По имени",
       byPosition: "По должности",
     },
@@ -140,6 +141,8 @@ const translations = {
       birthdays: "Дни рождения",
       filtersAndSorting: "Фильтры и сортировка",
       showHiddenUsers: "Показать скрытых сотрудников",
+      allGroups: "Все объекты",
+      filterByGroup: "Фильтр по объекту",
     },
     birthday: {
       title: "День рождения сегодня!",
@@ -322,6 +325,7 @@ const translations = {
     sorting: {
       byOrder: "By Order",
       byObject: "By Object",
+      byGroup: "By Group (Object)",
       byName: "By Name",
       byPosition: "By Position",
     },
@@ -338,6 +342,8 @@ const translations = {
       birthdays: "Birthdays",
       filtersAndSorting: "Filters and Sorting",
       showHiddenUsers: "Show hidden users",
+      allGroups: "All Objects",
+      filterByGroup: "Filter by object",
     },
     birthday: {
       title: "Birthday Today!",
