@@ -560,75 +560,79 @@ function OrgHierarchyBranch({
         onOpenChangeManager={onOpenChangeManager}
         onOpenEdit={onOpenEdit}
         isRoot={level === 1}
+        subordinateCount={directChildren.length}
+        isExpanded={isExpanded}
+        onToggleExpand={hasChildren && isLeafStack ? () => setIsExpanded((prev) => !prev) : undefined}
       />
 
       {/* If this node has direct children, draw the tree lines */}
       {hasChildren && (
         <>
-          {/* Vertical stem from bottom of parent card */}
-          <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700" />
-
-          {/* For Level 1 & 2: Horizontal distributor bus linking direct children horizontally */}
           {!isLeafStack ? (
-            <div className="relative flex flex-col items-center">
-              {/* Horizontal distribution bar spanning between first and last child */}
-              {directChildren.length > 1 && (
-                <div className="relative w-full flex justify-center">
-                  <div
-                    className="h-0.5 bg-slate-300 dark:bg-slate-700 absolute top-0"
-                    style={{
-                      left: `calc(${100 / (2 * directChildren.length)}%)`,
-                      right: `calc(${100 / (2 * directChildren.length)}%)`,
-                    }}
-                  />
-                </div>
-              )}
+            /* Levels 1 & 2: Orthogonal horizontal distribution rail */
+            <>
+              {/* Vertical stem dropping from bottom of parent card */}
+              <div className="w-0.5 h-6 bg-slate-400 dark:bg-slate-500 shrink-0" />
 
               {/* Children branches rendered side-by-side */}
-              <div className="flex items-start justify-center gap-6 sm:gap-8 pt-0">
-                {directChildren.map((child) => (
-                  <div key={child._id} className="flex flex-col items-center">
-                    {/* Vertical line dropping down to child */}
-                    <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700" />
-                    <OrgHierarchyBranch
-                      user={child}
-                      allUsers={allUsers}
-                      groupColorMap={groupColorMap}
-                      userRole={userRole}
-                      currentUserId={currentUserId}
-                      onOpenChangeManager={onOpenChangeManager}
-                      onOpenEdit={onOpenEdit}
-                      level={level + 1}
-                    />
-                  </div>
-                ))}
+              <div className="flex items-start justify-center pt-0">
+                {directChildren.map((child, index) => {
+                  const isFirst = index === 0;
+                  const isLast = index === directChildren.length - 1;
+                  const isOnly = directChildren.length === 1;
+
+                  return (
+                    <div key={child._id} className="relative flex flex-col items-center px-3 sm:px-5">
+                      {/* Top horizontal line segment forming continuous distribution bus */}
+                      {!isOnly && (
+                        <div
+                          className={`absolute top-0 h-0.5 bg-slate-400 dark:bg-slate-500 ${
+                            isFirst
+                              ? "left-1/2 right-0"
+                              : isLast
+                              ? "left-0 right-1/2"
+                              : "left-0 right-0"
+                          }`}
+                        />
+                      )}
+
+                      {/* Vertical line dropping down from horizontal bar into child card */}
+                      <div className="w-0.5 h-6 bg-slate-400 dark:bg-slate-500 shrink-0" />
+
+                      <OrgHierarchyBranch
+                        user={child}
+                        allUsers={allUsers}
+                        groupColorMap={groupColorMap}
+                        userRole={userRole}
+                        currentUserId={currentUserId}
+                        onOpenChangeManager={onOpenChangeManager}
+                        onOpenEdit={onOpenEdit}
+                        level={level + 1}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            </>
           ) : (
-            /* For Level 3+ (Manager with team members):
-               Render team members STACKED VERTICALLY with a left spine connector matching the image! */
-            <div className="flex flex-col items-center">
-              <button
-                type="button"
-                onClick={() => setIsExpanded((prev) => !prev)}
-                className="mt-1 mb-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
-                title={isExpanded ? "Collapse team" : "Expand team"}
-              >
-                <span>{directChildren.length} members</span>
-                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
+            /* Level 3+: Manager with team members stacked vertically with left spine connector */
+            isExpanded && (
+              <div className="relative flex flex-col items-start pl-6 pt-3">
+                {/* 1. Vertical line from bottom center of Manager card down 12px */}
+                <div className="absolute top-0 left-1/2 w-0.5 h-3 bg-slate-400 dark:bg-slate-500 -translate-x-1/2" />
 
-              {isExpanded && (
-                <div className="relative flex flex-col items-start pl-6 mt-1 space-y-3">
-                  {/* Vertical spine running down alongside the stacked cards */}
-                  <div
-                    className="absolute left-3 top-0 bottom-6 w-0.5 bg-slate-300 dark:bg-slate-700"
-                  />
+                {/* 2. Horizontal turn from manager center to the left spine at left: 12px */}
+                <div className="absolute top-3 left-3 w-[calc(50%-12px)] h-0.5 bg-slate-400 dark:bg-slate-500" />
 
+                {/* 3. Vertical spine running down from top-3 to center of the last card (bottom: 30px) */}
+                <div className="absolute top-3 left-3 bottom-[30px] w-0.5 bg-slate-400 dark:bg-slate-500" />
+
+                {/* 4. Team member cards stacked vertically */}
+                <div className="flex flex-col space-y-3">
                   {directChildren.map((child) => (
                     <div key={child._id} className="relative flex items-center">
-                      {/* Horizontal arm branching off the spine into the stacked card */}
-                      <div className="absolute -left-3 w-3 h-0.5 bg-slate-300 dark:bg-slate-700" />
+                      {/* Horizontal branch arm from spine into the card */}
+                      <div className="absolute -left-3 w-3 h-0.5 bg-slate-400 dark:bg-slate-500" />
                       <OrgNodeCard
                         user={child}
                         groupColorMap={groupColorMap}
@@ -641,8 +645,8 @@ function OrgHierarchyBranch({
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )
           )}
         </>
       )}
@@ -667,6 +671,9 @@ function OrgNodeCard({
   onOpenEdit,
   isRoot = false,
   compact = false,
+  subordinateCount,
+  isExpanded,
+  onToggleExpand,
 }: {
   user: User;
   groupColorMap: Record<string, typeof DIVISION_PALETTE[0]>;
@@ -676,6 +683,9 @@ function OrgNodeCard({
   onOpenEdit: (u: User) => void;
   isRoot?: boolean;
   compact?: boolean;
+  subordinateCount?: number;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }) {
   const { language } = useLanguage();
   const { groups } = useGroups();
@@ -709,8 +719,8 @@ function OrgNodeCard({
     <div
       className={`group relative flex items-center rounded-xl bg-white dark:bg-slate-900 shadow-xs hover:shadow-md transition-all duration-150 border-2 select-none ${
         isRoot
-          ? "border-slate-800 dark:border-slate-300 min-w-[200px] h-[64px] pl-4 pr-3"
-          : `${colorTheme.border} min-w-[190px] max-w-[210px] h-[60px] pl-3 pr-2`
+          ? "border-slate-800 dark:border-slate-300 min-w-[210px] h-[64px] pl-4 pr-3"
+          : `${colorTheme.border} min-w-[200px] max-w-[210px] h-[60px] pl-3 pr-2`
       }`}
     >
       {/* Avatar positioned on the left edge, slightly hanging outside just like the image */}
@@ -723,7 +733,7 @@ function OrgNodeCard({
       </div>
 
       {/* Info Content inside the box */}
-      <div className="ml-5 min-w-0 flex-1 py-1">
+      <div className="ml-5 min-w-0 flex-1 py-1 pr-1">
         <p className="text-[12px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight" title={name}>
           {name}
         </p>
@@ -739,6 +749,22 @@ function OrgNodeCard({
           </p>
         )}
       </div>
+
+      {/* Subordinates count / toggle pill on bottom right */}
+      {typeof subordinateCount === "number" && subordinateCount > 0 && onToggleExpand && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+          className="absolute -bottom-2.5 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-1 z-10 transition-transform active:scale-95 cursor-pointer"
+          title={isExpanded ? "Collapse team" : "Expand team"}
+        >
+          <span>{subordinateCount}</span>
+          {isExpanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
+        </button>
+      )}
 
       {/* Action Menu (Change Manager / Edit) for Admins */}
       {userRole === "admin" && (
