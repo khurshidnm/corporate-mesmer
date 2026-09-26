@@ -43,63 +43,78 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "No users found" }, { status: 400 });
       }
 
-      // Find or pick the CEO / Root node:
-      // First preference: top_manager with admin role, or first top_manager, or first user
+      // 1. Find or pick the CEO / Root node (MESMER Group):
+      // Prefer user with CEO/General Director position or email normurodov.khur.uzb@gmail.com or admin
       let ceo = allUsers.find(
-        (u) => u.role === "admin" && u.workerType === "top_manager"
+        (u) =>
+          u.email === "normurodov.khur.uzb@gmail.com" ||
+          /ceo|general director|генеральный директор|председатель/i.test(
+            `${u.position?.ru || ""} ${u.position?.en || ""}`
+          )
       );
       if (!ceo) {
-        ceo = allUsers.find((u) => u.workerType === "top_manager") || allUsers[0];
+        ceo = allUsers.find((u) => u.role === "admin" && u.workerType === "top_manager") ||
+              allUsers.find((u) => u.workerType === "top_manager") ||
+              allUsers[0];
       }
 
       // CEO reports to nobody (root)
       await User.findByIdAndUpdate(ceo._id, { reportsTo: null });
 
-      // Group remaining users by their division/group
-      const divisionDirectors: Record<string, string> = {};
       const remainingUsers = allUsers.filter(
         (u) => String(u._id) !== String(ceo._id)
       );
 
-      // Separate into managers vs team members
-      const managers = remainingUsers.filter((u) => u.workerType === "top_manager");
-      const teamMembers = remainingUsers.filter((u) => u.workerType !== "top_manager");
+      // 4 Divisions at the same level:
+      const divisionIds = ["mesmer", "mesal", "maxsus", "prestige_proekt"];
+      
+      for (const divId of divisionIds) {
+        const divUsers = remainingUsers.filter((u) => u.groups?.includes(divId));
+        if (divUsers.length === 0) continue;
 
-      // For each manager, link them either as a Division Director (reporting to CEO)
-      // or to another manager
-      for (let i = 0; i < managers.length; i++) {
-        const mgr = managers[i];
-        const group = mgr.groups?.[0];
+        const managers = divUsers.filter((u) => u.workerType === "top_manager");
+        const employees = divUsers.filter((u) => u.workerType !== "top_manager");
 
-        // If this group doesn't have a director yet, this manager becomes Director reporting to CEO
-        if (group && !divisionDirectors[group]) {
-          divisionDirectors[group] = String(mgr._id);
-          await User.findByIdAndUpdate(mgr._id, { reportsTo: ceo._id });
+        // Find Division Director (first manager with Director in title, or first manager)
+        let director = managers.find((m) =>
+          /director|директор/i.test(`${m.position?.ru || ""} ${m.position?.en || ""}`)
+        ) || managers[0];
+
+        if (director) {
+          // Division Director reports to CEO (MESMER Group)
+          await User.findByIdAndUpdate(director._id, { reportsTo: ceo._id });
+
+          // Department Managers report to the Division Director
+          const deptManagers = managers.filter(
+            (m) => String(m._id) !== String(director._id)
+          );
+
+          for (const dm of deptManagers) {
+            await User.findByIdAndUpdate(dm._id, { reportsTo: director._id });
+          }
+
+          // Distribute team members across Department Managers (or to director if no dept managers)
+          const targetManagers = deptManagers.length > 0 ? deptManagers : [director];
+          for (let i = 0; i < employees.length; i++) {
+            const assignedManager = targetManagers[i % targetManagers.length];
+            await User.findByIdAndUpdate(employees[i]._id, {
+              reportsTo: assignedManager._id,
+            });
+          }
         } else {
-          // Otherwise, report to the division director if in same group, or to CEO
-          const parentId = (group && divisionDirectors[group]) || ceo._id;
-          await User.findByIdAndUpdate(mgr._id, { reportsTo: parentId });
+          // If no manager in division, employees report to CEO
+          for (const emp of divUsers) {
+            await User.findByIdAndUpdate(emp._id, { reportsTo: ceo._id });
+          }
         }
       }
 
-      // Link team members:
-      // If their group has a director or manager, report to them; otherwise to CEO
-      for (const emp of teamMembers) {
-        const group = emp.groups?.[0];
-        let parentId = (group && divisionDirectors[group]) || null;
-
-        // If no director in group, check if any manager in that group exists
-        if (!parentId && group) {
-          const groupMgr = managers.find((m) => m.groups?.includes(group));
-          if (groupMgr) parentId = String(groupMgr._id);
-        }
-
-        // Fallback to CEO if no manager found in group
-        if (!parentId) {
-          parentId = String(ceo._id);
-        }
-
-        await User.findByIdAndUpdate(emp._id, { reportsTo: parentId });
+      // Any remaining users not belonging to the 4 divisions report to CEO
+      const unassignedToDiv = remainingUsers.filter(
+        (u) => !u.groups?.some((g) => divisionIds.includes(g))
+      );
+      for (const u of unassignedToDiv) {
+        await User.findByIdAndUpdate(u._id, { reportsTo: ceo._id });
       }
 
       return NextResponse.json({ success: true, ceoId: ceo._id });

@@ -157,10 +157,18 @@ export function OrgChart({
       computedUnassigned = users.filter((u) => u._id !== rootUser?._id);
     }
 
+    // Division official full display names
+    const DIVISION_FULL_NAMES: Record<string, string> = {
+      mesmer: "MESMER Engineering",
+      mesal: "MESAL Water Technologies",
+      maxsus: "Maxsus Suv Qurilish Invest",
+      prestige_proekt: "Prestige Proekt",
+    };
+
     // Prepare legend list
     const legend = groups.map((g, idx) => ({
       id: g.id,
-      label: g.label,
+      label: DIVISION_FULL_NAMES[g.id] || g.label,
       color: DIVISION_PALETTE[idx % DIVISION_PALETTE.length],
     }));
 
@@ -532,6 +540,7 @@ function OrgHierarchyBranch({
   }, [allUsers, user._id]);
 
   const hasChildren = directChildren.length > 0;
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // In the reference image:
   // - Level 1 is CEO (centered at top)
@@ -598,27 +607,41 @@ function OrgHierarchyBranch({
           ) : (
             /* For Level 3+ (Manager with team members):
                Render team members STACKED VERTICALLY with a left spine connector matching the image! */
-            <div className="relative flex flex-col items-start pl-6 mt-1 space-y-3">
-              {/* Vertical spine running down alongside the stacked cards */}
-              <div
-                className="absolute left-3 top-0 bottom-6 w-0.5 bg-slate-300 dark:bg-slate-700"
-              />
+            <div className="flex flex-col items-center">
+              <button
+                type="button"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                className="mt-1 mb-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+                title={isExpanded ? "Collapse team" : "Expand team"}
+              >
+                <span>{directChildren.length} members</span>
+                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
 
-              {directChildren.map((child) => (
-                <div key={child._id} className="relative flex items-center">
-                  {/* Horizontal arm branching off the spine into the stacked card */}
-                  <div className="absolute -left-3 w-3 h-0.5 bg-slate-300 dark:bg-slate-700" />
-                  <OrgNodeCard
-                    user={child}
-                    groupColorMap={groupColorMap}
-                    userRole={userRole}
-                    currentUserId={currentUserId}
-                    onOpenChangeManager={onOpenChangeManager}
-                    onOpenEdit={onOpenEdit}
-                    compact
+              {isExpanded && (
+                <div className="relative flex flex-col items-start pl-6 mt-1 space-y-3">
+                  {/* Vertical spine running down alongside the stacked cards */}
+                  <div
+                    className="absolute left-3 top-0 bottom-6 w-0.5 bg-slate-300 dark:bg-slate-700"
                   />
+
+                  {directChildren.map((child) => (
+                    <div key={child._id} className="relative flex items-center">
+                      {/* Horizontal arm branching off the spine into the stacked card */}
+                      <div className="absolute -left-3 w-3 h-0.5 bg-slate-300 dark:bg-slate-700" />
+                      <OrgNodeCard
+                        user={child}
+                        groupColorMap={groupColorMap}
+                        userRole={userRole}
+                        currentUserId={currentUserId}
+                        onOpenChangeManager={onOpenChangeManager}
+                        onOpenEdit={onOpenEdit}
+                        compact
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </>
@@ -664,7 +687,22 @@ function OrgNodeCard({
   // Group / Division name and color
   const groupId = user.groups?.[0];
   const groupObj = groups.find((g) => g.id === groupId);
-  const groupName = groupObj?.label || (isRoot ? "Executive" : "");
+
+  let groupName = "";
+  if (isRoot) {
+    groupName = "MESMER Group";
+  } else if (groupId === "mesmer") {
+    groupName = "MESMER Engineering";
+  } else if (groupId === "mesal") {
+    groupName = "MESAL Water Technologies";
+  } else if (groupId === "maxsus") {
+    groupName = "Maxsus Suv Qurilish Invest";
+  } else if (groupId === "prestige_proekt") {
+    groupName = "Prestige Proekt";
+  } else {
+    groupName = groupObj?.label || "";
+  }
+
   const colorTheme = (groupId && groupColorMap[groupId]) || DIVISION_PALETTE[0];
 
   return (
