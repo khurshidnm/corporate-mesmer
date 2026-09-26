@@ -639,14 +639,15 @@ export function EmployeeGrid({
           />
         )
       ) : view === "org" ? (
-        !loading && visibleUsers.length === 0 ? null : (
+        !loading && users.length === 0 ? null : (
           <OrgChart
-            users={visibleUsers}
+            users={users}
             loading={loading}
             userRole={userRole}
             currentUserId={currentUserId}
             onUpdate={handleUpdateUser}
             onDelete={handleDeleteUser}
+            onReload={onReload}
           />
         )
       ) : (
@@ -686,6 +687,7 @@ export function EmployeeGrid({
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
           onAdd={handleAddUser}
+          users={users}
         />
       )}
     </div>

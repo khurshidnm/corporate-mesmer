@@ -24,6 +24,7 @@ import { GroupSelect } from "./group-select";
 import { useGroups } from "@/hooks/use-groups";
 import { AdminTwoFactorReset } from "./two-factor-settings";
 import { useTranslation } from "@/hooks/use-translation";
+import { useLanguage } from "@/hooks/use-language";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { User, UpdateUserData } from "@/types";
@@ -35,6 +36,7 @@ interface EditEmployeeDialogProps {
   user: User;
   onUpdate: (user: User) => void;
   userRole?: "admin" | "worker";
+  users?: User[];
 }
 
 export function EditEmployeeDialog({
@@ -43,6 +45,7 @@ export function EditEmployeeDialog({
   user,
   onUpdate,
   userRole,
+  users = [],
 }: EditEmployeeDialogProps) {
   const [formData, setFormData] = useState<UpdateUserData>({
     name: user.name || { ru: "", en: "" },
@@ -61,9 +64,11 @@ export function EditEmployeeDialog({
     object_name: user.object_name || { ru: "", en: "" },
     hidden: user.hidden || false,
     room: user.room || "",
+    reportsTo: user.reportsTo || null,
     groups: user.groups || [],
   });
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { groups } = useGroups();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -346,6 +351,44 @@ export function EditEmployeeDialog({
                     </Select>
                   </div>
                 </>
+              )}
+
+              {/* Reports To (Direct Manager) */}
+              {userRole === "admin" && (
+                <div className="space-y-2">
+                  <Label htmlFor="reportsTo" className="text-sm font-medium">
+                    {t("form.reportsTo")}
+                  </Label>
+                  <Select
+                    value={formData.reportsTo || "none"}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        reportsTo: value === "none" ? null : value,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="border-gray-300 focus:border-blue-500 text-sm">
+                      <SelectValue placeholder={t("form.selectReportsTo")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        {t("form.noReportsTo")}
+                      </SelectItem>
+                      {users
+                        .filter((u) => u._id !== user._id)
+                        .map((u) => {
+                          const uName = u.name[language] || u.name.ru;
+                          const uPos = u.position[language] || u.position.ru;
+                          return (
+                            <SelectItem key={u._id} value={u._id}>
+                              {uName} {uPos ? `(${uPos})` : ""}
+                            </SelectItem>
+                          );
+                        })}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
               <div className="space-y-2">

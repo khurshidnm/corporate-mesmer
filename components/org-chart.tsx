@@ -1,31 +1,56 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { LazyAvatar } from "./lazy-avatar";
 import { EditEmployeeDialog } from "./edit-employee-dialog";
-import { EmployeeActionsMenu } from "./employee-card";
-import { GroupBadges } from "./group-badges";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/use-translation";
 import { useLanguage } from "@/hooks/use-language";
 import { useGroups } from "@/hooks/use-groups";
 import { getLocalizedText } from "@/lib/utils";
 import type { User } from "@/types";
 import {
-  Building2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Wand2,
   Users,
+  Building,
+  UserCheck,
   ChevronDown,
   ChevronUp,
+  MoreVertical,
+  UserPlus,
+  ArrowUpRight,
+  Shield,
+  MapPin,
   Mail,
   Phone,
-  MapPin,
-  ShieldCheck,
-  Layers,
-  Sparkles,
-  Maximize2,
-  Minimize2,
+  Check,
+  Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface OrgChartProps {
   users: User[];
@@ -34,7 +59,17 @@ interface OrgChartProps {
   currentUserId?: string;
   onUpdate?: (user: User) => void;
   onDelete?: (userId: string) => void;
+  onReload?: () => void;
 }
+
+// Color theme for divisions matching the user's reference image (Blue, Orange, Teal, Purple, etc.)
+export const DIVISION_PALETTE = [
+  { id: 0, border: "border-[#0284c7]", hex: "#0284c7", bg: "bg-sky-50/50 dark:bg-sky-950/20", text: "text-[#0284c7]" },
+  { id: 1, border: "border-[#f97316]", hex: "#f97316", bg: "bg-orange-50/50 dark:bg-orange-950/20", text: "text-[#f97316]" },
+  { id: 2, border: "border-[#0d9488]", hex: "#0d9488", bg: "bg-teal-50/50 dark:bg-teal-950/20", text: "text-[#0d9488]" },
+  { id: 3, border: "border-[#8b5cf6]", hex: "#8b5cf6", bg: "bg-purple-50/50 dark:bg-purple-950/20", text: "text-[#8b5cf6]" },
+  { id: 4, border: "border-[#ec4899]", hex: "#ec4899", bg: "bg-pink-50/50 dark:bg-pink-950/20", text: "text-[#ec4899]" },
+];
 
 export function OrgChart({
   users,
@@ -43,410 +78,655 @@ export function OrgChart({
   currentUserId,
   onUpdate,
   onDelete,
+  onReload,
 }: OrgChartProps) {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { groups } = useGroups();
-  const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>({});
 
-  // Partition users into management and work object branches
-  const { management, groupedEmployees, unassignedEmployees } = useMemo(() => {
-    const managers = users.filter((u) => u.workerType === "top_manager");
+  // Zoom scale for canvas
+  const [zoom, setZoom] = useState(1);
+  const [autoBuilding, setAutoBuilding] = useState(false);
 
-    const grouped: Record<string, User[]> = {};
-    for (const g of groups) {
-      grouped[g.id] = users.filter(
-        (u) => u.workerType !== "top_manager" && u.groups?.includes(g.id)
-      );
+  // Modal to change manager / report relationship
+  const [editingRelationUser, setEditingRelationUser] = useState<User | null>(null);
+  const [selectedNewManagerId, setSelectedNewManagerId] = useState<string>("none");
+  const [isSavingRelation, setIsSavingRelation] = useState(false);
+
+  // Edit employee modal
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  // Map each group ID to a division color
+  const groupColorMap = useMemo(() => {
+    const map: Record<string, typeof DIVISION_PALETTE[0]> = {};
+    groups.forEach((g, idx) => {
+      map[g.id] = DIVISION_PALETTE[idx % DIVISION_PALETTE.length];
+    });
+    return map;
+  }, [groups]);
+
+  // Build the hierarchy tree
+  const { roots, unassigned, hasHierarchy, divisionLegend } = useMemo(() => {
+    const userMap = new Map<string, User>();
+    const childrenMap = new Map<string, User[]>();
+
+    users.forEach((u) => {
+      userMap.set(u._id, u);
+      childrenMap.set(u._id, []);
+    });
+
+    let linkedCount = 0;
+    const explicitRoots: User[] = [];
+    const unlinked: User[] = [];
+
+    users.forEach((u) => {
+      if (u.reportsTo && userMap.has(u.reportsTo) && u.reportsTo !== u._id) {
+        childrenMap.get(u.reportsTo)!.push(u);
+        linkedCount++;
+      } else if (u.reportsTo === null || u.reportsTo === "") {
+        explicitRoots.push(u);
+      } else {
+        unlinked.push(u);
+      }
+    });
+
+    // Check if hierarchy has been established
+    const isBuilt = linkedCount > 0 || explicitRoots.length > 0;
+
+    let computedRoots: User[] = [];
+    let computedUnassigned: User[] = [];
+
+    if (isBuilt) {
+      if (explicitRoots.length > 0) {
+        computedRoots = explicitRoots;
+        computedUnassigned = unlinked;
+      } else {
+        // Find top level managers who report to nobody or circular
+        const managers = users.filter((u) => u.workerType === "top_manager");
+        computedRoots = managers.length > 0 ? [managers[0]] : [users[0]];
+        computedUnassigned = users.filter((u) => !computedRoots.includes(u));
+      }
+    } else {
+      // No explicit structure yet: construct a virtual layout from roles & groups so it renders beautifully immediately
+      const topManagers = users.filter((u) => u.workerType === "top_manager");
+      const rootUser = topManagers.find((u) => u.role === "admin") || topManagers[0] || users[0];
+
+      if (rootUser) {
+        computedRoots = [rootUser];
+      }
+      computedUnassigned = users.filter((u) => u._id !== rootUser?._id);
     }
 
-    const unassigned = users.filter(
-      (u) =>
-        u.workerType !== "top_manager" &&
-        (!u.groups || u.groups.length === 0 || !groups.some((g) => u.groups?.includes(g.id)))
-    );
+    // Prepare legend list
+    const legend = groups.map((g, idx) => ({
+      id: g.id,
+      label: g.label,
+      color: DIVISION_PALETTE[idx % DIVISION_PALETTE.length],
+    }));
 
     return {
-      management: managers,
-      groupedEmployees: grouped,
-      unassignedEmployees: unassigned,
+      roots: computedRoots,
+      unassigned: computedUnassigned,
+      hasHierarchy: isBuilt,
+      childrenMap,
+      divisionLegend: legend,
     };
   }, [users, groups]);
 
-  const toggleBranch = (key: string) => {
-    setCollapsedBranches((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  // Handler to auto-organize the hierarchy structure
+  const handleAutoOrganize = async () => {
+    try {
+      setAutoBuilding(true);
+      const res = await fetch("/api/users/hierarchy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "auto-organize" }),
+      });
+      if (res.ok) {
+        if (onReload) onReload();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to auto-organize structure");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error auto-organizing structure");
+    } finally {
+      setAutoBuilding(false);
+    }
   };
 
-  const expandAll = () => setCollapsedBranches({});
-  const collapseAll = () => {
-    const allCollapsed: Record<string, boolean> = { management: true, unassigned: true };
-    for (const g of groups) {
-      allCollapsed[g.id] = true;
+  // Handler to update reportsTo relationship
+  const handleSaveRelation = async () => {
+    if (!editingRelationUser) return;
+    try {
+      setIsSavingRelation(true);
+      const res = await fetch("/api/users/hierarchy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: editingRelationUser._id,
+          reportsTo: selectedNewManagerId === "none" ? null : selectedNewManagerId,
+        }),
+      });
+
+      if (res.ok) {
+        setEditingRelationUser(null);
+        if (onReload) onReload();
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to update hierarchy");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error saving relationship");
+    } finally {
+      setIsSavingRelation(false);
     }
-    setCollapsedBranches(allCollapsed);
+  };
+
+  // Open modal to change reportsTo
+  const openChangeManagerModal = (user: User) => {
+    setEditingRelationUser(user);
+    setSelectedNewManagerId(user.reportsTo || "none");
   };
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-28 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
+      <div className="flex flex-col items-center justify-center p-16 space-y-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <p className="text-sm text-slate-500">Loading organization structure...</p>
       </div>
     );
   }
 
-  const totalHeadcount = users.length;
-  const isAllCollapsed =
-    collapsedBranches.management &&
-    groups.every((g) => collapsedBranches[g.id]) &&
-    (unassignedEmployees.length === 0 || collapsedBranches.unassigned);
+  // Helper to get child nodes of a user
+  const getChildren = (userId: string): User[] => {
+    return users.filter((u) => u.reportsTo === userId && u._id !== userId);
+  };
 
   return (
-    <div className="space-y-8 pb-10">
-      {/* Header Banner & Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-transparent border border-blue-200/60 dark:border-blue-900/40 backdrop-blur-sm">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-600 text-white shadow-sm shadow-blue-500/30">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {t("orgChart.title")}
-            </h2>
+    <div className="relative min-h-[700px] flex flex-col bg-slate-50/60 dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 overflow-hidden">
+      {/* Top Bar: Controls & Legend */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 z-20">
+        <div className="flex items-center gap-2">
+          {/* Zoom controls */}
+          <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1 shadow-xs">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-600 dark:text-slate-300"
+              onClick={() => setZoom((z) => Math.min(1.5, z + 0.1))}
+              title={t("orgChart.zoomIn")}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <span className="text-xs font-semibold px-2 tabular-nums text-slate-600 dark:text-slate-400">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-600 dark:text-slate-300"
+              onClick={() => setZoom((z) => Math.max(0.5, z - 0.1))}
+              title={t("orgChart.zoomOut")}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-slate-600 dark:text-slate-300"
+              onClick={() => setZoom(1)}
+              title={t("orgChart.resetZoom")}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {t("orgChart.subtitle")}
+
+          {/* Admin Auto-Build function */}
+          {userRole === "admin" && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={autoBuilding}
+              onClick={handleAutoOrganize}
+              className="h-9 gap-1.5 text-xs font-medium border-blue-200 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100"
+            >
+              <Wand2 className="w-3.5 h-3.5" />
+              {autoBuilding ? t("orgChart.autoOrganizing") : t("orgChart.autoOrganize")}
+            </Button>
+          )}
+        </div>
+
+        {/* Legend Box in top right - EXACT style as the image */}
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs p-3.5 shadow-sm min-w-[210px]">
+          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
+            {t("orgChart.legend")}
           </p>
-        </div>
-
-        {/* Global Expand/Collapse & Stats */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-xs">
-            <Users className="w-3.5 h-3.5 inline mr-1 text-blue-600 dark:text-blue-400" />
-            {totalHeadcount}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={isAllCollapsed ? expandAll : collapseAll}
-            className="text-xs border-slate-300 dark:border-slate-700 dark:bg-slate-900"
-          >
-            {isAllCollapsed ? (
-              <>
-                <Maximize2 className="w-3.5 h-3.5 mr-1.5" />
-                {t("orgChart.expandAll")}
-              </>
-            ) : (
-              <>
-                <Minimize2 className="w-3.5 h-3.5 mr-1.5" />
-                {t("orgChart.collapseAll")}
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* TOP TIER: MANAGEMENT / LEADERSHIP */}
-      <div className="relative rounded-2xl border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-b from-blue-50/50 via-white to-white dark:from-slate-900/90 dark:via-slate-900 dark:to-slate-900 p-6 shadow-sm">
-        <div className="flex items-center justify-between border-b border-blue-100 dark:border-slate-800 pb-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 text-white shadow-sm">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
-                  {t("orgChart.management")}
-                </h3>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">
-                  {management.length}
+          <div className="space-y-1.5">
+            {divisionLegend.map((item) => (
+              <div key={item.id} className="flex items-center gap-2.5">
+                <span
+                  className="w-5 h-2.5 rounded-sm border-2 shrink-0"
+                  style={{ borderColor: item.color.hex }}
+                />
+                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 truncate max-w-[150px]">
+                  {item.label}
                 </span>
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {t("sidebar.topManagers")}
-              </span>
-            </div>
+            ))}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => toggleBranch("management")}
-            className="text-slate-500 hover:text-slate-900 dark:text-slate-400"
-          >
-            {collapsedBranches.management ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronUp className="w-4 h-4" />
-            )}
-          </Button>
         </div>
-
-        {!collapsedBranches.management && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {management.length === 0 ? (
-              <p className="text-sm text-slate-400 italic py-2">
-                {t("orgChart.noEmployeesInGroup")}
-              </p>
-            ) : (
-              management.map((manager) => (
-                <OrgPersonCard
-                  key={manager._id}
-                  user={manager}
-                  userRole={userRole}
-                  currentUserId={currentUserId}
-                  onUpdate={onUpdate}
-                  onDelete={onDelete}
-                  isManagement
-                />
-              ))
-            )}
-          </div>
-        )}
       </div>
 
-      {/* Visual Tree Connector Line */}
-      <div className="flex justify-center -my-4 relative z-0">
-        <div className="w-0.5 h-8 bg-gradient-to-b from-blue-500 to-slate-300 dark:to-slate-700" />
-      </div>
-
-      {/* SECOND TIER: WORK OBJECTS / BRANCHES */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 px-1">
-          <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {t("orgChart.objectsAndBranches")}
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6">
-          {groups.map((group) => {
-            const branchUsers = groupedEmployees[group.id] || [];
-            const isCollapsed = !!collapsedBranches[group.id];
-
-            return (
-              <div
-                key={group.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all duration-200 overflow-hidden"
-              >
-                {/* Branch Header */}
-                <div
-                  onClick={() => toggleBranch(group.id)}
-                  className="flex items-center justify-between p-4 sm:px-6 cursor-pointer select-none bg-slate-50/70 hover:bg-slate-100/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/70 border-b border-slate-200/80 dark:border-slate-800 transition-colors"
+      {/* Main Hierarchy Tree View with Zoom Pan Container */}
+      <div className="flex-1 w-full overflow-auto pb-12 pt-4">
+        <div
+          className="min-w-fit mx-auto transition-transform duration-150 origin-top flex flex-col items-center"
+          style={{ transform: `scale(${zoom})` }}
+        >
+          {roots.length === 0 ? (
+            <div className="text-center py-16">
+              <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-sm text-slate-500">No hierarchy nodes found.</p>
+              {userRole === "admin" && (
+                <Button
+                  onClick={handleAutoOrganize}
+                  size="sm"
+                  className="mt-3 bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 dark:bg-slate-800 border border-blue-200/60 dark:border-slate-700 text-blue-600 dark:text-blue-400">
-                      <Building2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2.5">
-                        <h4 className="font-bold text-base text-slate-900 dark:text-slate-100">
-                          {group.label}
-                        </h4>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200 tabular-nums">
-                          {branchUsers.length}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                  <Wand2 className="w-4 h-4 mr-1.5" />
+                  {t("orgChart.autoOrganize")}
+                </Button>
+              )}
+            </div>
+          ) : (
+            roots.map((rootUser) => (
+              <OrgHierarchyBranch
+                key={rootUser._id}
+                user={rootUser}
+                allUsers={users}
+                groupColorMap={groupColorMap}
+                userRole={userRole}
+                currentUserId={currentUserId}
+                onOpenChangeManager={openChangeManagerModal}
+                onOpenEdit={setEditingUser}
+                level={1}
+              />
+            ))
+          )}
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 hidden sm:inline">
-                      {isCollapsed ? t("actions.expand") || "Развернуть" : t("actions.collapse") || "Свернуть"}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
-                      {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-                    </Button>
-                  </div>
+          {/* Unassigned to structure drawer / list if any exist */}
+          {unassigned.length > 0 && (
+            <div className="mt-16 w-full max-w-4xl border-t-2 border-dashed border-slate-200 dark:border-slate-800 pt-6">
+              <div className="flex items-center justify-between mb-3 px-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    {t("orgChart.unassigned")}
+                  </span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {unassigned.length}
+                  </span>
                 </div>
-
-                {/* Branch Members */}
-                {!isCollapsed && (
-                  <div className="p-4 sm:p-6 bg-white dark:bg-slate-900">
-                    {branchUsers.length === 0 ? (
-                      <p className="text-sm text-slate-400 italic py-2 text-center">
-                        {t("orgChart.noEmployeesInGroup")}
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {branchUsers.map((user) => (
-                          <OrgPersonCard
-                            key={user._id}
-                            user={user}
-                            userRole={userRole}
-                            currentUserId={currentUserId}
-                            onUpdate={onUpdate}
-                            onDelete={onDelete}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                {userRole === "admin" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleAutoOrganize}
+                    className="text-xs text-blue-600 dark:text-blue-400"
+                  >
+                    <Wand2 className="w-3.5 h-3.5 mr-1" />
+                    {t("orgChart.autoOrganize")}
+                  </Button>
                 )}
               </div>
-            );
-          })}
 
-          {/* Unassigned Staff Branch if any exist */}
-          {unassignedEmployees.length > 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/60 overflow-hidden">
-              <div
-                onClick={() => toggleBranch("unassigned")}
-                className="flex items-center justify-between p-4 sm:px-6 cursor-pointer select-none bg-slate-50/50 hover:bg-slate-100/50 dark:bg-slate-800/20 dark:hover:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-sm text-slate-700 dark:text-slate-300">
-                      {t("orgChart.unassigned")}
-                    </h4>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                      {unassignedEmployees.length}
-                    </span>
-                  </div>
-                </div>
-
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400">
-                  {collapsedBranches.unassigned ? (
-                    <ChevronDown className="w-4 h-4" />
-                  ) : (
-                    <ChevronUp className="w-4 h-4" />
-                  )}
-                </Button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {unassigned.map((emp) => (
+                  <OrgNodeCard
+                    key={emp._id}
+                    user={emp}
+                    groupColorMap={groupColorMap}
+                    userRole={userRole}
+                    currentUserId={currentUserId}
+                    onOpenChangeManager={openChangeManagerModal}
+                    onOpenEdit={setEditingUser}
+                    compact
+                  />
+                ))}
               </div>
-
-              {!collapsedBranches.unassigned && (
-                <div className="p-4 sm:p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {unassignedEmployees.map((user) => (
-                      <OrgPersonCard
-                        key={user._id}
-                        user={user}
-                        userRole={userRole}
-                        currentUserId={currentUserId}
-                        onUpdate={onUpdate}
-                        onDelete={onDelete}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Change Manager Modal */}
+      {editingRelationUser && (
+        <Dialog
+          open={!!editingRelationUser}
+          onOpenChange={(open) => !open && setEditingRelationUser(null)}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">
+                {t("orgChart.changeManager")}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-3">
+              <div>
+                <Label className="text-xs text-slate-500 mb-1 block">
+                  {t("form.name")}
+                </Label>
+                <div className="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <LazyAvatar
+                    src={editingRelationUser.avatar || "/placeholder.svg"}
+                    alt=""
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {getLocalizedText(editingRelationUser.name, language)}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {getLocalizedText(editingRelationUser.position, language)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">
+                  {t("form.reportsTo")}
+                </Label>
+                <Select
+                  value={selectedNewManagerId}
+                  onValueChange={setSelectedNewManagerId}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t("form.selectReportsTo")} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    <SelectItem value="none">
+                      <span className="font-semibold text-blue-600">
+                        {t("form.noReportsTo")}
+                      </span>
+                    </SelectItem>
+                    {users
+                      .filter((u) => u._id !== editingRelationUser._id)
+                      .map((u) => (
+                        <SelectItem key={u._id} value={u._id}>
+                          {getLocalizedText(u.name, language)} (
+                          {getLocalizedText(u.position, language)})
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingRelationUser(null)}
+              >
+                {t("actions.cancel")}
+              </Button>
+              <Button
+                size="sm"
+                disabled={isSavingRelation}
+                onClick={handleSaveRelation}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isSavingRelation ? t("actions.saving") : t("actions.save")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Employee Dialog */}
+      {editingUser && (
+        <EditEmployeeDialog
+          open={!!editingUser}
+          onOpenChange={(open) => !open && setEditingUser(null)}
+          user={editingUser}
+          onUpdate={(u) => {
+            if (onUpdate) onUpdate(u);
+            setEditingUser(null);
+          }}
+          userRole={userRole}
+          users={users}
+        />
+      )}
     </div>
   );
 }
 
-/** Individual Employee Card Inside the Hierarchy Tree */
-function OrgPersonCard({
+/** Recursive Branch rendering matching the exact tree structure from the image */
+function OrgHierarchyBranch({
   user,
+  allUsers,
+  groupColorMap,
   userRole,
   currentUserId,
-  onUpdate,
-  onDelete,
-  isManagement = false,
+  onOpenChangeManager,
+  onOpenEdit,
+  level = 1,
 }: {
   user: User;
+  allUsers: User[];
+  groupColorMap: Record<string, typeof DIVISION_PALETTE[0]>;
   userRole: "admin" | "worker";
   currentUserId?: string;
-  onUpdate?: (user: User) => void;
-  onDelete?: (userId: string) => void;
-  isManagement?: boolean;
+  onOpenChangeManager: (u: User) => void;
+  onOpenEdit: (u: User) => void;
+  level: number;
+}) {
+  // Find immediate children of this node
+  const directChildren = useMemo(() => {
+    return allUsers.filter((u) => u.reportsTo === user._id && u._id !== user._id);
+  }, [allUsers, user._id]);
+
+  const hasChildren = directChildren.length > 0;
+
+  // In the reference image:
+  // - Level 1 is CEO (centered at top)
+  // - Level 2 is Division Directors (horizontal branch)
+  // - Level 3 is Managers (horizontal branch under each director)
+  // - Level 4 are Team Members (stacked vertically under each manager with a spine line!)
+  const isLeafStack = level >= 3 && directChildren.length > 0;
+
+  return (
+    <div className="flex flex-col items-center">
+      {/* Node Card */}
+      <OrgNodeCard
+        user={user}
+        groupColorMap={groupColorMap}
+        userRole={userRole}
+        currentUserId={currentUserId}
+        onOpenChangeManager={onOpenChangeManager}
+        onOpenEdit={onOpenEdit}
+        isRoot={level === 1}
+      />
+
+      {/* If this node has direct children, draw the tree lines */}
+      {hasChildren && (
+        <>
+          {/* Vertical stem from bottom of parent card */}
+          <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700" />
+
+          {/* For Level 1 & 2: Horizontal distributor bus linking direct children horizontally */}
+          {!isLeafStack ? (
+            <div className="relative flex flex-col items-center">
+              {/* Horizontal distribution bar spanning between first and last child */}
+              {directChildren.length > 1 && (
+                <div className="relative w-full flex justify-center">
+                  <div
+                    className="h-0.5 bg-slate-300 dark:bg-slate-700 absolute top-0"
+                    style={{
+                      left: `calc(${100 / (2 * directChildren.length)}%)`,
+                      right: `calc(${100 / (2 * directChildren.length)}%)`,
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Children branches rendered side-by-side */}
+              <div className="flex items-start justify-center gap-6 sm:gap-8 pt-0">
+                {directChildren.map((child) => (
+                  <div key={child._id} className="flex flex-col items-center">
+                    {/* Vertical line dropping down to child */}
+                    <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-700" />
+                    <OrgHierarchyBranch
+                      user={child}
+                      allUsers={allUsers}
+                      groupColorMap={groupColorMap}
+                      userRole={userRole}
+                      currentUserId={currentUserId}
+                      onOpenChangeManager={onOpenChangeManager}
+                      onOpenEdit={onOpenEdit}
+                      level={level + 1}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* For Level 3+ (Manager with team members):
+               Render team members STACKED VERTICALLY with a left spine connector matching the image! */
+            <div className="relative flex flex-col items-start pl-6 mt-1 space-y-3">
+              {/* Vertical spine running down alongside the stacked cards */}
+              <div
+                className="absolute left-3 top-0 bottom-6 w-0.5 bg-slate-300 dark:bg-slate-700"
+              />
+
+              {directChildren.map((child) => (
+                <div key={child._id} className="relative flex items-center">
+                  {/* Horizontal arm branching off the spine into the stacked card */}
+                  <div className="absolute -left-3 w-3 h-0.5 bg-slate-300 dark:bg-slate-700" />
+                  <OrgNodeCard
+                    user={child}
+                    groupColorMap={groupColorMap}
+                    userRole={userRole}
+                    currentUserId={currentUserId}
+                    onOpenChangeManager={onOpenChangeManager}
+                    onOpenEdit={onOpenEdit}
+                    compact
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Individual Node Card
+ * Matches the reference image:
+ * - Rounded rectangular box
+ * - Border color mapped to division/group
+ * - Circular avatar overlapping on the left edge
+ * - Name, Role/Position, Division Name
+ */
+function OrgNodeCard({
+  user,
+  groupColorMap,
+  userRole,
+  currentUserId,
+  onOpenChangeManager,
+  onOpenEdit,
+  isRoot = false,
+  compact = false,
+}: {
+  user: User;
+  groupColorMap: Record<string, typeof DIVISION_PALETTE[0]>;
+  userRole: "admin" | "worker";
+  currentUserId?: string;
+  onOpenChangeManager: (u: User) => void;
+  onOpenEdit: (u: User) => void;
+  isRoot?: boolean;
+  compact?: boolean;
 }) {
   const { language } = useLanguage();
+  const { groups } = useGroups();
   const { t } = useTranslation();
-  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const name = getLocalizedText(user.name, language);
   const position = getLocalizedText(user.position, language);
 
+  // Group / Division name and color
+  const groupId = user.groups?.[0];
+  const groupObj = groups.find((g) => g.id === groupId);
+  const groupName = groupObj?.label || (isRoot ? "Executive" : "");
+  const colorTheme = (groupId && groupColorMap[groupId]) || DIVISION_PALETTE[0];
+
   return (
-    <>
-      <div
-        className={`group relative flex flex-col justify-between p-4 rounded-xl border transition-all duration-200 hover:shadow-md ${
-          isManagement
-            ? "border-blue-200 dark:border-blue-900/60 bg-white dark:bg-slate-800/90 hover:border-blue-400 dark:hover:border-blue-600"
-            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700"
-        }`}
-      >
-        <div>
-          {/* Top row: Avatar + Name/Role + Admin Menu */}
-          <div className="flex items-start gap-3">
-            <LazyAvatar
-              src={user.avatar || "/placeholder.svg"}
-              alt={name}
-              className={`w-11 h-11 shrink-0 rounded-full ring-2 ${
-                isManagement
-                  ? "ring-blue-500/40 dark:ring-blue-400/40"
-                  : "ring-slate-200 dark:ring-slate-700"
-              }`}
-            />
-            <div className="min-w-0 flex-1">
-              <h5 className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate" title={name}>
-                {name}
-              </h5>
-              <p className="text-xs font-medium text-blue-600 dark:text-blue-400 truncate mt-0.5" title={position}>
-                {position}
-              </p>
-            </div>
-
-            {userRole === "admin" && onUpdate && onDelete && (
-              <div className="shrink-0 -mr-1">
-                <EmployeeActionsMenu
-                  onEdit={() => setShowEditDialog(true)}
-                  onDelete={() => onDelete(user._id)}
-                  canDelete={currentUserId !== user._id}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Location / Cabinet Badge */}
-          {user.room && (
-            <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800 px-2 py-1 rounded-md w-fit" title={t("form.room")}>
-              <MapPin className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-              <span className="truncate">{user.room}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Contact Quick Actions Footer */}
-        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-          <a
-            href={`mailto:${user.email}`}
-            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate max-w-[130px]"
-            title={user.email}
-          >
-            <Mail className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-            <span className="truncate">{user.email}</span>
-          </a>
-          <a
-            href={`tel:${user.phone}`}
-            className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors ml-2 shrink-0 font-medium"
-            title={user.phone}
-          >
-            <Phone className="w-3.5 h-3.5 text-slate-400" />
-            <span>{user.phone}</span>
-          </a>
-        </div>
+    <div
+      className={`group relative flex items-center rounded-xl bg-white dark:bg-slate-900 shadow-xs hover:shadow-md transition-all duration-150 border-2 select-none ${
+        isRoot
+          ? "border-slate-800 dark:border-slate-300 min-w-[200px] h-[64px] pl-4 pr-3"
+          : `${colorTheme.border} min-w-[190px] max-w-[210px] h-[60px] pl-3 pr-2`
+      }`}
+    >
+      {/* Avatar positioned on the left edge, slightly hanging outside just like the image */}
+      <div className="absolute -left-3.5 top-1/2 -translate-y-1/2 shrink-0">
+        <LazyAvatar
+          src={user.avatar || "/placeholder.svg"}
+          alt={name}
+          className="w-9 h-9 rounded-full ring-2 ring-white dark:ring-slate-900 shadow-xs object-cover"
+        />
       </div>
 
-      {userRole === "admin" && onUpdate && (
-        <EditEmployeeDialog
-          open={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          user={user}
-          onUpdate={onUpdate}
-          userRole={userRole}
-        />
+      {/* Info Content inside the box */}
+      <div className="ml-5 min-w-0 flex-1 py-1">
+        <p className="text-[12px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight" title={name}>
+          {name}
+        </p>
+        <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate leading-tight mt-0.5" title={position}>
+          {position}
+        </p>
+        {groupName && (
+          <p
+            className="text-[10px] font-medium truncate leading-tight mt-0.5"
+            style={{ color: isRoot ? undefined : colorTheme.hex }}
+          >
+            {groupName}
+          </p>
+        )}
+      </div>
+
+      {/* Action Menu (Change Manager / Edit) for Admins */}
+      {userRole === "admin" && (
+        <div className="shrink-0 -mr-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                title="Options"
+              >
+                <MoreVertical className="w-3.5 h-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="text-xs">
+              <DropdownMenuItem onClick={() => onOpenChangeManager(user)}>
+                <ArrowUpRight className="w-3.5 h-3.5 mr-2 text-blue-600" />
+                {t("orgChart.changeManager")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onOpenEdit(user)}>
+                <UserCheck className="w-3.5 h-3.5 mr-2 text-slate-600" />
+                {t("actions.edit")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       )}
-    </>
+    </div>
   );
 }

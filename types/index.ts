@@ -25,6 +25,7 @@ export interface User {
   };
   hidden?: boolean;
   room?: string;
+  reportsTo?: string | null;
   groups?: UserGroup[];
   createdAt?: string;
   updatedAt?: string;
@@ -54,6 +55,7 @@ export interface CreateUserData {
   };
   hidden?: boolean;
   room?: string;
+  reportsTo?: string | null;
   groups?: UserGroup[];
 }
 
@@ -81,6 +83,7 @@ export interface UpdateUserData {
   };
   hidden?: boolean;
   room?: string;
+  reportsTo?: string | null;
   groups?: UserGroup[];
 }
 

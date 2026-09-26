@@ -23,21 +23,24 @@ import { ImageUpload } from "./image-upload";
 import { GroupSelect } from "./group-select";
 import { useGroups } from "@/hooks/use-groups";
 import { useTranslation } from "@/hooks/use-translation";
+import { useLanguage } from "@/hooks/use-language";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { CreateUserData } from "@/types";
+import type { CreateUserData, User } from "@/types";
 import { UserPlus, X } from "lucide-react";
 
 interface AddEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (user: CreateUserData) => void;
+  users?: User[];
 }
 
 export function AddEmployeeDialog({
   open,
   onOpenChange,
   onAdd,
+  users = [],
 }: AddEmployeeDialogProps) {
   const [formData, setFormData] = useState<CreateUserData>({
     name: { ru: "", en: "" },
@@ -53,9 +56,11 @@ export function AddEmployeeDialog({
     order_id: 0,
     object_name: { ru: "", en: "" },
     room: "",
+    reportsTo: null,
     groups: [],
   });
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const { groups } = useGroups();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -361,6 +366,40 @@ export function AddEmployeeDialog({
                   </div>
                 </>
               )}
+
+              {/* Reports To / Direct Manager */}
+              <div className="space-y-2">
+                <Label htmlFor="reportsTo" className="text-sm font-medium">
+                  {t("form.reportsTo")}
+                </Label>
+                <Select
+                  value={formData.reportsTo || "none"}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      reportsTo: value === "none" ? null : value,
+                    })
+                  }
+                >
+                  <SelectTrigger className="border-gray-300 focus:border-blue-500 text-sm">
+                    <SelectValue placeholder={t("form.selectReportsTo")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      {t("form.noReportsTo")}
+                    </SelectItem>
+                    {users.map((u) => {
+                      const uName = u.name[language] || u.name.ru;
+                      const uPos = u.position[language] || u.position.ru;
+                      return (
+                        <SelectItem key={u._id} value={u._id}>
+                          {uName} {uPos ? `(${uPos})` : ""}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="order_id" className="text-sm font-medium">

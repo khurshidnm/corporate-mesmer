@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       order_id,
       object_name,
       room,
+      reportsTo,
       groups,
     } = body;
 
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
       order_id: finalOrderId,
       object_name,
       room: typeof room === "string" ? room.trim() : "",
+      reportsTo: reportsTo || null,
       groups: sanitizeGroups(groups) || [],
     });
 

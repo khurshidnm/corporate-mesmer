@@ -26,6 +26,7 @@ export interface IUser extends Document {
   };
   hidden?: boolean;
   room?: string;
+  reportsTo?: mongoose.Types.ObjectId | string | null;
   groups: UserGroup[];
   twoFactorEnabled: boolean;
   twoFactorSecret?: string;
@@ -133,6 +134,11 @@ const UserSchema = new Schema<IUser>(
       type: String,
       default: "",
       trim: true,
+    },
+    reportsTo: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
     groups: {
       type: [String],

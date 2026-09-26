@@ -78,6 +78,7 @@ export async function PUT(
       order_id,
       object_name,
       room,
+      reportsTo,
       hidden,
       groups,
     } = body;
@@ -111,6 +112,10 @@ export async function PUT(
 
       if (object_name) {
         updateData.object_name = object_name;
+      }
+
+      if (reportsTo !== undefined) {
+        updateData.reportsTo = reportsTo && typeof reportsTo === "string" && reportsTo.trim() !== "" ? reportsTo : null;
       }
 
       if (hidden !== undefined) {
