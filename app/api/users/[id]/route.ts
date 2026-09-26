@@ -77,6 +77,7 @@ export async function PUT(
       viewPermissions,
       order_id,
       object_name,
+      room,
       hidden,
       groups,
     } = body;
@@ -89,6 +90,10 @@ export async function PUT(
       birthday: new Date(birthday),
       avatar: await storeAvatar(resolvedParams.id, avatar),
     };
+
+    if (room !== undefined) {
+      updateData.room = typeof room === "string" ? room.trim() : "";
+    }
 
     if (session.user?.role === "admin") {
       if (role) {

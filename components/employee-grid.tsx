@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { EmployeeCard, EmployeeCardSkeleton } from "./employee-card";
 import { EmployeeTable } from "./employee-table";
+import { OrgChart } from "./org-chart";
 import { AddEmployeeDialog } from "./add-employee-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import {
   LayoutGrid,
   List,
   Layers,
+  Network,
 } from "lucide-react";
 import { useGroups } from "@/hooks/use-groups";
 import { Input } from "@/components/ui/input";
@@ -54,7 +56,7 @@ interface EmployeeGridProps {
 
 const SKELETON_COUNT = 10;
 
-type ViewMode = "cards" | "table";
+type ViewMode = "cards" | "table" | "org";
 const VIEW_STORAGE_KEY = "employeeView";
 
 export function EmployeeGrid({
@@ -321,6 +323,7 @@ export function EmployeeGrid({
         [
           ["cards", LayoutGrid, t("view.cards")],
           ["table", List, t("view.table")],
+          ["org", Network, t("view.orgChart")],
         ] as const
       ).map(([mode, Icon, label]) => (
         <button
@@ -633,6 +636,17 @@ export function EmployeeGrid({
                 setSortOrder("asc");
               }
             }}
+          />
+        )
+      ) : view === "org" ? (
+        !loading && visibleUsers.length === 0 ? null : (
+          <OrgChart
+            users={visibleUsers}
+            loading={loading}
+            userRole={userRole}
+            currentUserId={currentUserId}
+            onUpdate={handleUpdateUser}
+            onDelete={handleDeleteUser}
           />
         )
       ) : (

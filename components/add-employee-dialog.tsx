@@ -52,6 +52,7 @@ export function AddEmployeeDialog({
     viewPermissions: "both",
     order_id: 0,
     object_name: { ru: "", en: "" },
+    room: "",
     groups: [],
   });
   const { t } = useTranslation();
@@ -247,6 +248,21 @@ export function AddEmployeeDialog({
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     required
+                    className="border-gray-300 focus:border-blue-500 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="room" className="text-sm font-medium">
+                    {t("form.room")} <span className="text-xs text-gray-500">({t("form.optional")})</span>
+                  </Label>
+                  <Input
+                    id="room"
+                    value={formData.room || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, room: e.target.value })
+                    }
+                    placeholder={t("form.roomPlaceholder")}
                     className="border-gray-300 focus:border-blue-500 text-sm"
                   />
                 </div>

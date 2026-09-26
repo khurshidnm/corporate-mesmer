@@ -190,7 +190,17 @@ function EmployeeRow({
           </div>
         </TableCell>
         <TableCell>
-          <GroupBadges groups={user.groups} nowrap />
+          <div className="flex items-center gap-2 flex-wrap">
+            <GroupBadges groups={user.groups} nowrap />
+            {user.room && (
+              <span
+                className="inline-flex items-center text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium border border-slate-200 dark:border-slate-700/60"
+                title={t("form.room")}
+              >
+                📍 {user.room}
+              </span>
+            )}
+          </div>
         </TableCell>
         <TableCell>
           <a href={`mailto:${user.email}`} className="text-slate-600 dark:text-slate-300 hover:text-blue-700 dark:hover:text-blue-400 hover:underline">

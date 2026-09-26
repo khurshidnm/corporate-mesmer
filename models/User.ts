@@ -25,6 +25,7 @@ export interface IUser extends Document {
     en: string;
   };
   hidden?: boolean;
+  room?: string;
   groups: UserGroup[];
   twoFactorEnabled: boolean;
   twoFactorSecret?: string;
@@ -127,6 +128,11 @@ const UserSchema = new Schema<IUser>(
     hidden: {
       type: Boolean,
       default: false,
+    },
+    room: {
+      type: String,
+      default: "",
+      trim: true,
     },
     groups: {
       type: [String],

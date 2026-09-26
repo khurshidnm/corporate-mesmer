@@ -23,6 +23,7 @@ import {
   Edit,
   Trash2,
   Building,
+  MapPin,
 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-translation";
 import { useLanguage } from "@/hooks/use-language";
@@ -131,6 +132,12 @@ export function EmployeeCard({
               <Building className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
               <GroupBadges groups={user.groups} />
             </div>
+            {user.room && (
+              <div className="flex min-w-0 items-start gap-3 text-slate-600 dark:text-slate-300" title={t("form.room")}>
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                <span className="leading-5 font-medium">{user.room}</span>
+              </div>
+            )}
           </div>
 
           <div className="mt-auto flex items-start gap-3 border-t border-slate-100 dark:border-slate-800 pt-4">

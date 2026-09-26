@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       viewPermissions,
       order_id,
       object_name,
+      room,
       groups,
     } = body;
 
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
       viewPermissions: viewPermissions || "both",
       order_id: finalOrderId,
       object_name,
+      room: typeof room === "string" ? room.trim() : "",
       groups: sanitizeGroups(groups) || [],
     });
 
